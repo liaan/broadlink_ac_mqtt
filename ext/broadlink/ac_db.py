@@ -579,14 +579,14 @@ class ac_db(device):
 		self.status['temp'] = float(temperature)
 		
 		self.set_ac_status()
-		return self.status
+		return self.make_nice_status(self.status)
 		
 	def switch_off(self):
 		##Make sure latest info as cannot just update one things, have set all
 		self.get_ac_states()
 		self.status['power'] =  self.STATIC.ONOFF.OFF
 		self.set_ac_status()
-		return self.status
+		return self.make_nice_status(self.status)
 		
 	def switch_on(self):
 		##Make sure latest info as cannot just update one things, have set all
@@ -594,22 +594,33 @@ class ac_db(device):
 		self.status['power'] =  self.STATIC.ONOFF.ON
 		self.set_ac_status()
 		
-		return self.status
+		return self.make_nice_status(self.status)
 		
 	def set_mode(self,mode_text):
 		##Make sure latest info as cannot just update one things, have set all
 		self.get_ac_states()
+		
 		mode = self.STATIC.MODE.__dict__.get(mode_text.upper())
-		if mode:
+		if mode != None:
 			self.status['mode'] = mode
 			self.set_ac_status()
-			return self.status
+			return self.make_nice_status(self.status)
 		else:
-			logger.debug("Not found mode value %s" , str(mode_text))
+			self.logger.debug("Not found mode value %s" , str(mode_text))
 			return False
+			
+	def set_fanspeed(self,mode_text):
+		##Make sure latest info as cannot just update one things, have set all
+		self.get_ac_states()
 		
-		
-		
+		mode = self.STATIC.FAN.__dict__.get(mode_text.upper())
+		if mode != None:
+			self.status['fanspeed'] = mode
+			self.set_ac_status()
+			return self.make_nice_status(self.status)
+		else:
+			self.logger.debug("Not found mode value %s" , str(mode_text))
+			return False
 	  
 	def _get_ac_info(self):
 		GET_AC_INFO = bytearray.fromhex("0C00BB0006800000020021011B7E0000")
@@ -666,27 +677,8 @@ class ac_db(device):
 			self.status['turbo'] =response_payload[14] >> 6& 0b00000001
 			self.status['clean'] = response_payload[18] >> 2& 0b00000001
 			self.status['lastupdate'] = time.time()
-			
-			status_nice = {}
-			status_nice['temp'] = self.status['temp']
-			status_nice['power'] = self.get_key(self.STATIC.ONOFF.__dict__,self.status['power'])
-			status_nice['fixation_v'] = self.get_key(self.STATIC.FIXATION.VERTICAL.__dict__,self.status['fixation_v'])
-			status_nice['mode'] = self.get_key(self.STATIC.MODE.__dict__,self.status['mode'])
-			status_nice['sleep'] = self.get_key(self.STATIC.ONOFF.__dict__,self.status['sleep'])
-			status_nice['display'] = self.get_key(self.STATIC.ONOFF.__dict__,self.status['display'])
-			status_nice['mildew'] = self.get_key(self.STATIC.ONOFF.__dict__,self.status['mildew'])
-			status_nice['health'] = self.get_key(self.STATIC.ONOFF.__dict__,self.status['health'])
-			status_nice['fixation_h'] = self.get_key(self.STATIC.FIXATION.VERTICAL.__dict__,self.status['fixation_h'])
-			status_nice['fanspeed']  = self.get_key(self.STATIC.FAN.__dict__,self.status['fanspeed'])
-			status_nice['ifeel'] = self.get_key(self.STATIC.ONOFF.__dict__,self.status['ifeel'])
-			status_nice['mute'] = self.get_key(self.STATIC.ONOFF.__dict__,self.status['mute'])
-			status_nice['turbo'] = self.get_key(self.STATIC.ONOFF.__dict__,self.status['turbo'])
-			status_nice['clean'] = self.get_key(self.STATIC.ONOFF.__dict__,self.status['clean'])
-			status_nice['macaddress'] = self.status['macaddress']
-			
-			
-			return status_nice
 			 
+			return self.make_nice_status(self.status)
 			
 		else:
 			return 0
@@ -694,6 +686,28 @@ class ac_db(device):
 			
 		return self.status
 		
+		
+	def make_nice_status(self,status):
+		status_nice = {}
+		status_nice['temp'] = status['temp']
+		status_nice['power'] = self.get_key(self.STATIC.ONOFF.__dict__,status['power'])
+		status_nice['fixation_v'] = self.get_key(self.STATIC.FIXATION.VERTICAL.__dict__,status['fixation_v'])
+		status_nice['mode'] = self.get_key(self.STATIC.MODE.__dict__,status['mode'])
+		status_nice['sleep'] = self.get_key(self.STATIC.ONOFF.__dict__,status['sleep'])
+		status_nice['display'] = self.get_key(self.STATIC.ONOFF.__dict__,status['display'])
+		status_nice['mildew'] = self.get_key(self.STATIC.ONOFF.__dict__,status['mildew'])
+		status_nice['health'] = self.get_key(self.STATIC.ONOFF.__dict__,status['health'])
+		status_nice['fixation_h'] = self.get_key(self.STATIC.FIXATION.VERTICAL.__dict__,status['fixation_h'])
+		status_nice['fanspeed']  = self.get_key(self.STATIC.FAN.__dict__,status['fanspeed'])
+		status_nice['ifeel'] = self.get_key(self.STATIC.ONOFF.__dict__,status['ifeel'])
+		status_nice['mute'] = self.get_key(self.STATIC.ONOFF.__dict__,status['mute'])
+		status_nice['turbo'] = self.get_key(self.STATIC.ONOFF.__dict__,status['turbo'])
+		status_nice['clean'] = self.get_key(self.STATIC.ONOFF.__dict__,status['clean'])
+		status_nice['macaddress'] = status['macaddress']
+			
+			
+		return status_nice
+			
 	def get_key(self,list,search_value):
 		
 		for key,value in list.iteritems():  			

@@ -158,6 +158,15 @@ class AcToMqtt:
 			else:
 				logger.debug("Mode on has invalid value %s",value)
 				return
+		elif function == "fanspeed":
+			
+			status = self.devices[address].set_fanspeed(value)
+			if status :
+				self.publish_mqtt_info(status)
+				
+			else:
+				logger.debug("Fanspeed on has invalid value %s",value)
+				return
 		else:
 			logger.debug("No function match")
 			return
