@@ -36,7 +36,7 @@ class AcToMqtt:
 		
 		if discover_devices == None:
 			logger.debug("No Devices Found")
-			print "nothing found"
+			#print "nothing found"
 			sys.exit()
 			
 		for device in discover_devices:	
@@ -61,7 +61,7 @@ class AcToMqtt:
 		
 				for device in discover_devices:	
 					status = device.get_ac_states()
-					print status
+					#print status
 					if status:
 						self.publish_mqtt_info(status);
 					else:

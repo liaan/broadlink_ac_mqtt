@@ -128,7 +128,7 @@ def discover(timeout=None, local_ip_address=None):
         return devices
       responsepacket = bytearray(response[0])
       
-      print ":".join("{:02x}".format(c) for c in responsepacket)
+      #print ":".join("{:02x}".format(c) for c in responsepacket)
 
       host = response[1]
       devtype = responsepacket[0x34] | responsepacket[0x35] << 8
