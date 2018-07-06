@@ -58,7 +58,7 @@ class AcToMqtt:
 		#device.switch_on()
 		while True:
 			try:
-		
+			
 				for device in discover_devices:	
 					status = device.get_ac_states()
 					#print status
@@ -69,10 +69,9 @@ class AcToMqtt:
 						
 				time.sleep(5)
 				
-			except ValueError:
-				print e
-				print "oops"
-		
+			except Exception as e:	
+				logger.debug(e)
+				continue
 			
 			
 	def publish_mqtt_info(self,status):
@@ -108,40 +107,62 @@ class AcToMqtt:
 					
 	def _on_mqtt_message(self, client, userdata, msg):
 		
+	
 		try:
-			
 			logger.debug('message! userdata: %s, message %s' % (userdata, msg.topic+" "+str(msg.payload)))
 			##Function is second last
 			function = msg.topic.split('/')[-2]
 			address = msg.topic.split('/')[-3]
 			value = msg.payload
-			logger.debug('Function: %s, Address %s , value %s' %(function,address,value))
-			
-		except:
+			logger.debug('Function: %s, Address %s , value %s' %(function,address,value))			
+	
+		except Exception as e:	
+			logger.debug(e)			
 			return
-
-
+			
+		
 		##Process received		
-		if function ==  "temp":		
-			if self.devices.get(address):
-				self.devices[address].set_temperature(float(value[0:3]))
-			else:
-				logger.debug("Device not on list of desocvered devices")
+		if function ==  "temp":	
+			try:
+				if self.devices.get(address):
+					status = self.devices[address].set_temperature(float(value))
+					
+					if status :
+						self.publish_mqtt_info(status)
+				else:
+					logger.debug("Device not on list of desocvered devices")
+					return
+			except Exception as e:	
+				logger.debug(e)
 				return
 			
 		elif function == "power":
 			if value.lower() == "on":
-				self.devices[address].switch_on()
+				status = self.devices[address].switch_on()
+				if status :
+					self.publish_mqtt_info(status)
 			elif value.lower() == "off":
-				self.devices[address].switch_off()
+				status = self.devices[address].switch_off()
+				if status :
+					self.publish_mqtt_info(status)
 			else:
 				logger.debug("Switch on has invalid value, values is on/off received %s",value)
+				return
+				
+		elif function == "mode":
+			
+			status = self.devices[address].set_mode(value)
+			if status :
+				self.publish_mqtt_info(status)
+				
+			else:
+				logger.debug("Mode on has invalid value %s",value)
 				return
 		else:
 			logger.debug("No function match")
 			return
-			
-			
+		
+	
 		
 			
 	def _on_mqtt_connect(self, client, userdata, flags, rc):

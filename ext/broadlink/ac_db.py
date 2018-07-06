@@ -575,10 +575,11 @@ class ac_db(device):
 		
 	def set_temperature(self,temperature):
 		self.logger.debug("Setting temprature to %s",temperature)
-		self.get_ac_states()
+		self.get_ac_states()		
 		self.status['temp'] = float(temperature)
+		
 		self.set_ac_status()
-		return
+		return self.status
 		
 	def switch_off(self):
 		##Make sure latest info as cannot just update one things, have set all
@@ -593,8 +594,21 @@ class ac_db(device):
 		self.status['power'] =  self.STATIC.ONOFF.ON
 		self.set_ac_status()
 		
-		return
-
+		return self.status
+		
+	def set_mode(self,mode_text):
+		##Make sure latest info as cannot just update one things, have set all
+		self.get_ac_states()
+		mode = self.STATIC.MODE.__dict__.get(mode_text.upper())
+		if mode:
+			self.status['mode'] = mode
+			self.set_ac_status()
+			return self.status
+		else:
+			logger.debug("Not found mode value %s" , str(mode_text))
+			return False
+		
+		
 		
 	  
 	def _get_ac_info(self):
@@ -707,10 +721,10 @@ class ac_db(device):
 		
   
 	def set_ac_status(self):
-		 
+		self.logger.debug("Start set_ac_status")
 		#packet = bytearray(32)
 		#10111011 00000000 00000110 10000000 00000000 00000000 00001111 00000000 00000001 9 00000001 10 01000111 11 00101000  12 00100000 13 10100000 14 00000000 15 00100000  16 00000000 17 00000000 18 00100000 19 00000000 20 00010000 21 00000000 22 00000101 10010001 10010101
-
+		
 		if self.status['temp'] < 16:
 			temperature = 16-8
 			temperature_05 = 0
@@ -724,7 +738,7 @@ class ac_db(device):
 				temperature_05 = 0
 			else:
 				temperature_05 = 1	
-				temperature = int(data['temp'] -8)
+				temperature = int(self.status['temp'] -8)
 		
 		
 		payload  = bytearray(23)
