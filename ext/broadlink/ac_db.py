@@ -485,6 +485,8 @@ class ac_db(device):
 	 
 	type = "ac_db"
 	devtype =  0x4E2a
+	update_interval = 30
+	
 	class STATIC:
 		##Static stuff
 		class FIXATION:
@@ -527,12 +529,14 @@ class ac_db(device):
 	
 	
  
-	def __init__ (self, host, mac,debug = False):			
+	def __init__ (self, host, mac,debug = False,update_interval = 30):			
 		device.__init__(self, host, mac)	
 		
 		
 		self.status = {}		
-		self.logger = self.logging.getLogger(__name__)				
+		self.logger = self.logging.getLogger(__name__)		
+		self.update_interval = update_interval
+		
 		##Set default values
 		mac = mac[::-1]
 		
@@ -549,9 +553,23 @@ class ac_db(device):
 		self.logger.debug("Authenticating")
 		if self.auth() == False:
 			return False;
-		self.logger.debug("Getting current details in init")	
-		self.get_ac_states()
+		
+		self.logger.debug("Getting current details in init")		
+		
+		self.get_ac_status(force_update = True);
 
+	def get_ac_status(self,force_update = False):
+		
+		if (force_update == False and (self.status['lastupdate'] + self.update_interval) > time.time()) :
+			return self.make_nice_status(self.status)
+			
+		##Get AC info(also populates the current temp)
+		self.get_ac_info()
+		##Get the current status
+		status = self.get_ac_states(True)
+		return status
+		
+		
 	def set_default_values(self):
 				
 		self.status['temp'] = float(19)
@@ -560,7 +578,8 @@ class ac_db(device):
 		self.status['mode'] = self.STATIC.MODE.AUTO
 		self.status['sleep'] = self.STATIC.ONOFF.OFF
 		self.status['display'] = self.STATIC.ONOFF.ON
-		self.status['health'] = self.STATIC.ONOFF.OFF
+		self.status['health'] = self.STATIC.ONOFF.OFF  
+		self.status['ifeel'] = self.STATIC.ONOFF.OFF
 		self.status['fixation_h'] = self.STATIC.FIXATION.HORIZONTAL.LEFT_RIGHT_FIX
 		self.status['fanspeed']  = self.STATIC.FAN.AUTO
 		self.status['turbo'] = self.STATIC.ONOFF.OFF
@@ -570,6 +589,7 @@ class ac_db(device):
 		self.status['macaddress'] = None
 		self.status['hostip'] = None
 		self.status['lastupdate'] = None
+		self.status['ambient_temp'] = None
 		debug  = 0;
 		
 		
@@ -621,30 +641,117 @@ class ac_db(device):
 		else:
 			self.logger.debug("Not found mode value %s" , str(mode_text))
 			return False
-	  
-	def _get_ac_info(self):
+	
+	def set_homekit_status(self,status):
+		if type(status) is not str:
+			self.logger.debug('Status variable is not string %s',type(status))
+			return False
+		
+		if status.lower() == 'coolon':
+			self.status['mode'] = self.STATIC.MODE.COOLING
+			self.status['power'] =  self.STATIC.ONOFF.ON
+			self.set_ac_status()
+			return self.make_nice_status(self.status)
+		elif status.lower() == 'heaton':
+			self.status['mode'] = self.STATIC.MODE.HEATING
+			self.status['power'] =  self.STATIC.ONOFF.ON
+			self.set_ac_status()
+			return self.make_nice_status(self.status)
+ 	 
+		elif status.lower() == 'auto':
+			self.status['mode'] = self.STATIC.MODE.AUTO
+			self.status['power'] =  self.STATIC.ONOFF.ON
+			self.set_ac_status()
+			return self.make_nice_status(self.status)
+			
+		elif status.lower() == "off":
+			self.status['power'] =  self.STATIC.ONOFF.OFF
+			self.set_ac_status()
+			return self.make_nice_status(self.status)
+		else:
+			self.logger.debug('Invalid status for homekit %s',status)
+			return False
+			
+	def set_homeassist_status(self,status):
+		if type(status) is not str:
+			self.logger.debug('Status variable is not string %s',type(status))
+			return False
+		
+		if status.lower() == 'cool':
+			self.status['mode'] = self.STATIC.MODE.COOLING
+			self.status['power'] =  self.STATIC.ONOFF.ON
+			self.set_ac_status()
+			return self.make_nice_status(self.status)
+		elif status.lower() == 'heat':
+			self.status['mode'] = self.STATIC.MODE.HEATING
+			self.status['power'] =  self.STATIC.ONOFF.ON
+			self.set_ac_status()
+			return self.make_nice_status(self.status)
+ 	 
+		elif status.lower() == 'auto':
+			self.status['mode'] = self.STATIC.MODE.AUTO
+			self.status['power'] =  self.STATIC.ONOFF.ON
+			self.set_ac_status()
+			return self.make_nice_status(self.status)
+			
+		elif status.lower() == "off":
+			self.status['power'] =  self.STATIC.ONOFF.OFF
+			self.set_ac_status()
+			return self.make_nice_status(self.status)
+		else:
+			self.logger.debug('Invalid status for homekit %s',status)
+			return False
+
+			
+	def get_ac_info(self):
 		GET_AC_INFO = bytearray.fromhex("0C00BB0006800000020021011B7E0000")
 		response = self.send_packet(0x6a, GET_AC_INFO)
-		print "Resposnse:" + ''.join(format(x, '02x') for x in response)
+		#print "Resposnse:" + ''.join(format(x, '02x') for x in response)
+		#print "Response:" + ' '.join(format(x, '08b') for x in response[9:])		
 		
 		err = response[0x22] | (response[0x23] << 8)
 		if err == 0:
 		  aes = AES.new(bytes(self.key), AES.MODE_CBC, bytes(self.iv))
+
 		  response_payload = aes.decrypt(bytes(response[0x38:]))
-		  print "AC INFO Payload:" + response_payload+"\n"
-		  print "AC INFO::" + ''.join(x.encode('hex') for x in response_payload )
+
+		  #print "AC INFO Payload:" + response_payload+"\n"
+		  #print "AC INFO::" + ''.join(x.encode('hex') for x in response_payload )
+		  response_payload = bytearray(response_payload)
+		  
+		  
+		  #print "AC INFO Payload:" + response_payload+"\n"
+		  #print "bla"  + ' '.join(format(x, '08b') for x in response_payload[9:] )  
+		  
+		  #print "AC INFO2:" + ''.join(x.encode('binary') for x in response_payload )
+		  
+		  response_payload  = response_payload[2:]  ##Drop leading stuff as dont need
+		  self.logger.debug ("AcInfo: " + ' '.join(format(x, '08b') for x in response_payload[9:] )  )	
+
+		  
+		  
+		  ##Its only the last 5 bits?
+		  self.status['ambient_temp'] = response_payload[15] & 0b00011111
+		  
+		  return self.make_nice_status(self.status)
+		else:
+		  return 0
 		  
 		  
 	### Get AC Status
 	## GEt the current status of the aircon and parse into status array a one have to send full status each time for update, cannot just send one setting
 	##
-	def get_ac_states(self):    
+	def get_ac_states(self,force_update = False):    
 		GET_STATES =  bytearray.fromhex("0C00BB0006800000020011012B7E0000")  ##From app
 		
-		response = self.send_packet(0x6a, GET_STATES)
+		##Check if the status is up to date to reduce timeout issues. Can be overwritten by force_update
+		if (force_update == False and (self.status['lastupdate'] + self.update_interval) > time.time()) :
+			return self.make_nice_status(self.status)
 		
-		
+		response = self.send_packet(0x6a, GET_STATES)	
+		##Check response, the checksums should be 0
 		err = response[0x22] | (response[0x23] << 8)
+		
 		if err == 0:
 			aes = AES.new(bytes(self.key), AES.MODE_CBC, bytes(self.iv))
 			response_payload = bytes(aes.decrypt(bytes(response[0x38:])))			
@@ -657,9 +764,10 @@ class ac_db(device):
 			packet_len = response_payload[0]
 			if packet_len != 0x19:  ##should be 25, if not, then wrong packet
 				return False
-			
+		
+			self.logger.debug ("" + ' '.join(format(x, '08b') for x in response_payload[9:] )  )	
 			response_payload  = response_payload[2:]  ##Drop leading stuff as dont need
-			self.logger.debug ("" + ' '.join(format(x, '08b') for x in response_payload[9:] )  )
+			#self.logger.debug ("" + ' '.join(format(x, '08b') for x in response_payload[9:] )  )
 			
 			
 			self.status['temp'] = 8+ (response_payload[10]>>3) + (0.5 * float(response_payload[12]>>7))
@@ -676,6 +784,7 @@ class ac_db(device):
 			self.status['mute'] = response_payload[14] >> 7& 0b00000001
 			self.status['turbo'] =response_payload[14] >> 6& 0b00000001
 			self.status['clean'] = response_payload[18] >> 2& 0b00000001
+			
 			self.status['lastupdate'] = time.time()
 			 
 			return self.make_nice_status(self.status)
@@ -690,6 +799,7 @@ class ac_db(device):
 	def make_nice_status(self,status):
 		status_nice = {}
 		status_nice['temp'] = status['temp']
+		status_nice['ambient_temp'] = status['ambient_temp']
 		status_nice['power'] = self.get_key(self.STATIC.ONOFF.__dict__,status['power'])
 		status_nice['fixation_v'] = self.get_key(self.STATIC.FIXATION.VERTICAL.__dict__,status['fixation_v'])
 		status_nice['mode'] = self.get_key(self.STATIC.MODE.__dict__,status['mode'])
@@ -703,8 +813,31 @@ class ac_db(device):
 		status_nice['mute'] = self.get_key(self.STATIC.ONOFF.__dict__,status['mute'])
 		status_nice['turbo'] = self.get_key(self.STATIC.ONOFF.__dict__,status['turbo'])
 		status_nice['clean'] = self.get_key(self.STATIC.ONOFF.__dict__,status['clean'])
+		
 		status_nice['macaddress'] = status['macaddress']
-			
+		##HomeKit topics
+		if self.status['power'] == self.STATIC.ONOFF.OFF:
+			status_nice['homekit'] = "Off"		
+		elif status['power'] == self.STATIC.ONOFF.ON and status['mode'] == self.STATIC.MODE.AUTO :
+			status_nice['homekit'] = "Auto"		
+		elif status['power'] == self.STATIC.ONOFF.ON and status['mode'] == self.STATIC.MODE.HEATING :
+			status_nice['homekit'] = "HeatOn"
+		elif status['power'] == self.STATIC.ONOFF.ON and status['mode'] == self.STATIC.MODE.COOLING :
+			status_nice['homekit'] = "CoolOn"
+		else:
+			status_nice['homekit'] = "Error"
+		##Home Assist topic	
+		if self.status['power'] == self.STATIC.ONOFF.OFF:
+			status_nice['homeassist'] = "off"		
+		elif status['power'] == self.STATIC.ONOFF.ON and status['mode'] == self.STATIC.MODE.AUTO :
+			status_nice['homeassist'] = "auto"		
+		elif status['power'] == self.STATIC.ONOFF.ON and status['mode'] == self.STATIC.MODE.HEATING :
+			status_nice['homeassist'] = "heat"
+		elif status['power'] == self.STATIC.ONOFF.ON and status['mode'] == self.STATIC.MODE.COOLING :
+			status_nice['homeassist'] = "cool"
+		else:
+			status_nice['homeassist'] = "Error"
+ 			
 			
 		return status_nice
 			
