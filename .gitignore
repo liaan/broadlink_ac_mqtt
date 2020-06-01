@@ -1,0 +1,6 @@
+##Ignore all except for
+*.pyc
+*.txt
+*.log
+config.yml
+

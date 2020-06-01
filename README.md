@@ -1,5 +1,11 @@
-# broadlink_ac_mqtt
-dunham bush aircon and should work on Rinnai
+# Broadlink Air Conditioners to mqtt
+Dunham bush aircons and might work Rinnai.
+
+uses Pahoo MQTT so run :
+pip install 
+```
+pip install paho-mqtt
+```
 
 uses Pahoo MQTT so run :
 pip install 
