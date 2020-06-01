@@ -7,12 +7,6 @@ pip install
 pip install paho-mqtt
 ```
 
-uses Pahoo MQTT so run :
-pip install 
-```
-pip install paho-mqtt
-```
-
 simply run monitor.py , will discover all aircons and publish to specified MQTT server
 errors logs to file error.log
 
