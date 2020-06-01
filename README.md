@@ -1,5 +1,5 @@
 # Broadlink Air Conditioners to mqtt .... very much still in dev
-Dunham bush aircons and might work Rinnai.
+Dunham bush aircons and might work Rinnai.  Broadlink devtype == 0x4E2a (20010)
 
 uses Pahoo MQTT so run :
 
