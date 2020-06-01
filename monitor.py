@@ -1,6 +1,5 @@
 #!/usr/bin/python
 import os
-
 import time
 import sys
 import logging
@@ -8,15 +7,20 @@ import commands
 import argparse
 import binascii
 import yaml
-#sys.path.insert(1, os.path.join(os.path.dirname(__file__), './ext/paho-mqtt-client'))
-#import client as mqtt
 import paho.mqtt.client as mqtt
 sys.path.insert(1, os.path.join(os.path.dirname(__file__), './ext/broadlink'))
 import ac_db as broadlink
+import tempfile
+
+pid = str(os.getpid())
+pidfile = tempfile.gettempdir() +"/ac_to_mqtt.pid"
+pid_stale_time = 60
+pid_last_update = 0
+
 
 
 logger = logging.getLogger(__name__)
-softwareversion = 0.001
+softwareversion = 1.0
 
 mqtt_host = "mqtt"
 mqtt_port = 1883
@@ -27,7 +31,7 @@ daemon_mode = False;
 update_interval = 30
 devices = {}
 
-
+#*****************************************  Main Class ************************************************
 class AcToMqtt:
 	
 	devices	= {}
@@ -80,6 +84,10 @@ class AcToMqtt:
 			self.discover()
 		
 		while daemon_mode:
+			
+			touch_pid_file()
+				
+		
 			##Just check status on every update interval
 			if (last_update + update_interval) > time.time():
 				#logger.debug("Timeout not done, so lets wait a abit : %s : %s" %(last_update + update_interval,time.time()))				
@@ -89,6 +97,8 @@ class AcToMqtt:
 			
 			try:
 				last_update = time.time();
+				##Update PID file
+				
 				
 				for device in self.discover_devices:
 					##Get the status, the global update interval is used as well to reduce requests to aircons as they slow
@@ -104,7 +114,7 @@ class AcToMqtt:
 				logger.critical(e)	
 				##Something went wrong, so just exit and let system restart	
 				continue;
-				
+			
 			##Set last update 
 			
 				
@@ -278,7 +288,10 @@ class AcToMqtt:
 		logger.debug('Listing on %s for messages' % (sub_topic))
 		##LWT
 		self._publish('LWT','online')
-		
+#*****************************************************************************************************
+#*****************************************  Get going methods ************************************************
+
+	
 def apply_config(PrintConfig = False):
 	global daemon_mode
 	global mqtt_host
@@ -287,7 +300,8 @@ def apply_config(PrintConfig = False):
 	global update_interval
 	
 	##Load config
-	with open("config.yml", "r") as ymlfile:
+	
+	with open(os.path.dirname(os.path.realpath(__file__))+'/config.yml', "r") as ymlfile:
 		config = yaml.load(ymlfile,Loader=yaml.SafeLoader)
 
 	daemon_mode = config["service"]["daemon_mode"]
@@ -302,13 +316,45 @@ def apply_config(PrintConfig = False):
 	
 	return
 				
-				
+def touch_pid_file():
+	global pid_last_update
+	
+	##No need to update very often
+	if(pid_last_update + pid_stale_time -2 > time.time()):	
+		return
+	
+	pid_last_update = time.time() 
+	with open(pidfile, 'w') as f:
+		f.write("%s,%s" % (os. getpid() ,pid_last_update))
+	
+	
+		
 def stop_if_already_running():
-			script_name = os.path.basename(__file__)
-			l = commands.getstatusoutput("ps aux | grep -e '%s' | grep -v grep | awk '{print $2}'| awk '{print $2}'" % script_name)
-			if l[1]:
-				logger.debug('Already Running, Exit')
-				sys.exit(0);
+	
+	
+	##Check if there is pid, if there is, then check if valid or stale .. probably should add process id for race conditions but damn, this is a simple scripte.....
+	if os.path.isfile(pidfile):
+
+		logger.debug("%s already exists, checking if stale" % pidfile)
+		##Check if stale
+		f = open(pidfile, 'r') 
+		if f.mode =="r":
+			contents =f.read()
+			contents = contents.split(',')
+			
+			##Stale, so go ahead
+			if (float(contents[1])+ pid_stale_time) < time.time():
+				logger.info("Pid is stale, so we'll just overwrite it go on")								
+				
+			else:
+				logger.debug("Pid is still valid, so exit")												
+				sys.exit()
+	 
+	##Write current time
+	touch_pid_file();
+	
+	
+#################  Main startup ####################
 				
 def main():
 		global ac_host
@@ -318,9 +364,11 @@ def main():
 		global ac_port
 		global discover_devices
 		
+		 
+		
+		##class
 		actomqtt = AcToMqtt();
-		
-		
+				
         # Argument parsing
 		parser = argparse.ArgumentParser(		
 			description='Duhnham Bush v%s: Mqtt publisher of Duhnham Bush on the Pi.' % softwareversion			
@@ -343,8 +391,10 @@ def main():
 		
 		# Init logging
 		
-		logging.basicConfig(filename=os.path.dirname(os.path.realpath(__file__))+'/error.log',level=(logging.DEBUG if args.debug else logging.INFO),format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s')
-		logging.debug("Monitor Starting")
+		logging.basicConfig(filename=os.path.dirname(os.path.realpath(__file__))+'/acdb_mqtt.log',level=(logging.DEBUG if args.debug else logging.INFO),format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s')
+		#logging.basicConfig(filename='ac_to_mqtt.log',level=(logging.DEBUG if args.debug else logging.INFO),format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s')
+		logging.info("Starting Monitor...")
+		
 		
 		#if args.devicehost: 
 		#		ac_host = args.devicehost
@@ -371,10 +421,7 @@ def main():
 		##prtint config
 		if args.printconfig:	
 			apply_config(True)
-			sys.exit()
-			
-			 
-
+			sys.exit() 
 		
 		if args.writeconfig:
 			actomqtt.write_discovered()
@@ -391,22 +438,28 @@ def main():
 		
 		if args.discover: 
 			actomqtt.discover()
-			sys.exit();
-			
-		##Make sure not already running
-		stop_if_already_running()
-
-		
+			sys.exit(); 
 				
 		logger.debug("%s v%s is starting up" % (__file__, softwareversion))
 		logLevel = {0: 'NOTSET', 10: 'DEBUG', 20: 'INFO', 30: 'WARNING', 40: 'ERROR'}
 		logger.debug('Loglevel set to ' + logLevel[logging.getLogger().getEffectiveLevel()])
 	 	
 		
+		##Make sure not already running		
+		stop_if_already_running()		
+		
         # Start and run the mainloop
 		logger.debug("Starting mainloop, responding on only events")
 		
-		actomqtt.main();
+	 
+		try:
+			actomqtt.main();
+		except KeyboardInterrupt:
+			logging.debug("User Keyboard interuped")
+		finally:
+			os.unlink(pidfile)
+			logging.info("Stopping Monitor...")
+
 			
 
 		
