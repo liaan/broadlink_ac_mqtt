@@ -393,7 +393,7 @@ def main():
 		
 		logging.basicConfig(filename=os.path.dirname(os.path.realpath(__file__))+'/acdb_mqtt.log',level=(logging.DEBUG if args.debug else logging.INFO),format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s')
 		#logging.basicConfig(filename='ac_to_mqtt.log',level=(logging.DEBUG if args.debug else logging.INFO),format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s')
-		logging.info("Starting Monitor...")
+		
 		
 		
 		#if args.devicehost: 
@@ -448,6 +448,7 @@ def main():
 		##Make sure not already running		
 		stop_if_already_running()		
 		
+		logging.info("Starting Monitor...")
         # Start and run the mainloop
 		logger.debug("Starting mainloop, responding on only events")
 		
