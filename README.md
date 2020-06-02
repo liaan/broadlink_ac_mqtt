@@ -2,7 +2,7 @@
 Dunham bush aircons and might work Rinnai.
 
 uses Pahoo MQTT so run :
-pip install 
+
 ```
 pip install paho-mqtt
 ```
