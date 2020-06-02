@@ -25,6 +25,8 @@ softwareversion = 1.0
 mqtt_host = "mqtt"
 mqtt_port = 1883
 mqtt_client_id = "AcToMqtt"
+mqtt_password = False
+mqtt_user = False
 
 debug = False
 daemon_mode = False;
@@ -156,18 +158,26 @@ class AcToMqtt:
 	
 		 
 			self._mqtt = mqtt.Client(client_id=mqtt_client_id, clean_session=True, userdata=None)
+			
 			##Set last will and testament
 			self._mqtt.will_set("/aircon/LWT","offline",True)
+			##Auth
+			
+			if mqtt_user:			
+				self._mqtt.username_pw_set(mqtt_user,mqtt_password)
 			
 			
-
+			
+			##Setup callbacks
 			self._mqtt.on_connect = self._on_mqtt_connect
 			self._mqtt.on_message = self._on_mqtt_message
 			self._mqtt.on_log = self._on_mqtt_log
 			self._mqtt.on_subscribed = self._mqtt_on_subscribe
-
-			logger.debug("Coneccting to MQTT: %s with client ID = %s" % (mqtt_host,mqtt_client_id))
+			
+			##Connect
+			logger.debug("Coneccting to MQTT: %s with client ID = %s" % (mqtt_host,mqtt_client_id))			
 			self._mqtt.connect_async(mqtt_host, port=mqtt_port, keepalive=60, bind_address="")
+			
 			##Start
 			self._mqtt.loop_start()  # creates new thread and runs Mqtt.loop_forever() in it.
 			
@@ -297,6 +307,8 @@ def apply_config(PrintConfig = False):
 	global mqtt_host
 	global mqtt_port
 	global mqtt_client
+	global mqtt_user
+	global mqtt_password
 	global update_interval
 	
 	##Load config
@@ -305,9 +317,13 @@ def apply_config(PrintConfig = False):
 		config = yaml.load(ymlfile,Loader=yaml.SafeLoader)
 
 	daemon_mode = config["service"]["daemon_mode"]
-	update_interval = config["service"]["update_interval"]
+	update_interval = config["service"]["update_interval"]	
 	mqtt_host = config["mqtt"]["host"]
 	mqtt_port = config["mqtt"]["port"]
+	mqtt_user = config["mqtt"]["user"]
+	mqtt_password = config["mqtt"]["passwd"]
+
+
 	
 	if(PrintConfig):
 		print(config["mqtt"])

@@ -872,12 +872,19 @@ class ac_db(device):
 		#packet = bytearray(32)
 		#10111011 00000000 00000110 10000000 00000000 00000000 00001111 00000000 00000001 9 00000001 10 01000111 11 00101000  12 00100000 13 10100000 14 00000000 15 00100000  16 00000000 17 00000000 18 00100000 19 00000000 20 00010000 21 00000000 22 00000101 10010001 10010101
 		
-		if self.status['temp'] < 16:
+		if self.status['temp'] < 16:			
 			temperature = 16-8
 			temperature_05 = 0
+			
+			##Make sure to fix the global status as well
+			self.status['temp'] = 16
+			
 		elif self.status['temp'] > 32:
 			temperature = 32-8
 			temperature_05 = 0
+			##Make sure to fix the global status as well
+			self.status['temp'] = 32
+			
 		else:
 			##if 0.5 then make true	. Also  offset with 8
 			if self.status['temp'].is_integer():
