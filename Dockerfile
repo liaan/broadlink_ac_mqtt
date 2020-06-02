@@ -3,7 +3,9 @@ FROM python:2
 # set version label
 LABEL maintainer="wjbeckett"
 
-WORKDIR /usr/src/app
+RUN mkdir /config
+
+WORKDIR /config
 
 RUN \
  echo "***** install python utils ****" && \
@@ -15,9 +17,8 @@ RUN \
 	pyyaml
 RUN \
  echo "**** Grab latest version ****" && \
- cd /tmp && \
- git clone https://github.com/liaan/broadlink_ac_mqtt.git 
-COPY /tmp/broadlink_ac_mqtt /config
+ git clone https://github.com/liaan/broadlink_ac_mqtt.git
+
 COPY . .
 
 CMD [ "python", "./config/monitor.py" ]
