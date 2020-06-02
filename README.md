@@ -56,7 +56,10 @@ services:
 The container needs to use the host network to ensure it runs on the same subnet as your AC units.
 
 Once the container starts you will need to edit your config.yml file with your MQTT host address and username/password.
-After you have edited the config.yml file, restart your container. You can then use a program like [MQTT Explorer](http://mqtt-explorer.com/) to watch for the `aircon` topic to start populating with your AC unit mac addresses.
+
+After you have edited the config.yml file, restart your container. 
+
+You can then use a program like [MQTT Explorer](http://mqtt-explorer.com/) to watch for the `aircon` topic to start populating with your AC unit mac addresses.
 
 # MQTT Usage
 
@@ -73,7 +76,9 @@ To set values just publish to /aircon/mac_address/value/set  new_value
 
 # Home-Assistant
 AC2MQTT can be utilised with Home-Assistant using the [climate.mqtt](https://www.home-assistant.io/integrations/climate.mqtt/) integration.
+
 In order to utilise AC2MQTT in Home-Assistant there is an additional MQTT value that must be used instead of `mode` as Home-Assistant expects the modes in a specific case.
+
 Instead of using `mode` for the mode commands, you'll need to use `homeassist` instead.
 
 An example of a Home-Assistant config using AC2MQTT is below.
