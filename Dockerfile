@@ -1,33 +1,25 @@
-FROM lsiobase/ubuntu:bionic
+FROM python:2
 
 # set version label
 LABEL maintainer="wjbeckett"
 
-# environment settings
-ENV HOME="/config" \
-PYTHONIOENCODING=utf-8
+WORKDIR /usr/src/app
 
 RUN \
  echo "***** install python utils ****" && \
  apt-get update && \
  apt-get install -y \
-    git \
-    python \
-	python-pip && \
+    git && \
  pip install --no-cache-dir \
-	paho-mqtt
+	paho-mqtt \
+	pyyaml
 RUN \
  echo "**** Grab latest version ****" && \
- git clone "https://github.com/liaan/broadlink_ac_mqtt.git" /config
-RUN \
- echo "**** cleanup ****" && \
- apt-get purge --auto-remove -y \
-	python-pip && \
- apt-get clean && \
- rm -rf \
-	/tmp/* \
-	/var/lib/apt/lists/* \
-	/var/tmp/*
-# ports and volumes
-# EXPOSE 8080
+ cd /tmp && \
+ git clone https://github.com/liaan/broadlink_ac_mqtt.git 
+COPY /tmp/broadlink_ac_mqtt /config
+COPY . .
+
+CMD [ "python", "./config/monitor.py" ]
+
 VOLUME /config
