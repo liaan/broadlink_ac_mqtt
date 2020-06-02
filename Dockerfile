@@ -15,7 +15,7 @@ RUN \
     python \
 	python-pip \
  pip install --no-cache-dir \
-	paho-mqtt && \
+	paho-mqtt
 RUN \
  echo "**** Grab latest version ****" && \
  git clone "https://github.com/liaan/broadlink_ac_mqtt.git" /config
