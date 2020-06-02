@@ -14,7 +14,7 @@ RUN \
     git \
     python \
 	python-pip \
- pip install --no-cache-dir \
+ pip install \
 	paho-mqtt
 RUN \
  echo "**** Grab latest version ****" && \
