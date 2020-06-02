@@ -14,13 +14,14 @@ RUN \
     git && \
  pip install --no-cache-dir \
 	paho-mqtt \
-	pyyaml
+	pyyaml \
+	pycrypto
 RUN \
  echo "**** Grab latest version ****" && \
- git clone https://github.com/liaan/broadlink_ac_mqtt.git
+ git clone https://github.com/liaan/broadlink_ac_mqtt.git .
 
 COPY . .
 
-CMD [ "python", "./config/monitor.py" ]
+CMD [ "python", "./monitor.py" ]
 
 VOLUME /config
