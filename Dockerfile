@@ -18,7 +18,8 @@ RUN \
 	pycrypto
 RUN \
  echo "**** Grab latest version ****" && \
- git clone https://github.com/liaan/broadlink_ac_mqtt.git .
+ git clone https://github.com/liaan/broadlink_ac_mqtt.git . && \
+ cp -n sample_config.ym_ config.yml
 
 COPY . .
 
