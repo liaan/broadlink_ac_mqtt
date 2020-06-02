@@ -13,8 +13,8 @@ RUN \
  apt-get install -y \
     git \
     python \
-	python-pip \
- pip install \
+	python-pip && \
+ pip install --no-cache-dir \
 	paho-mqtt
 RUN \
  echo "**** Grab latest version ****" && \
