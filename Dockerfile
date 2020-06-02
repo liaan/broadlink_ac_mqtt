@@ -22,7 +22,7 @@ RUN \
 RUN \
  echo "**** cleanup ****" && \
  apt-get purge --auto-remove -y \
-	python-pip \
+	python-pip && \
  apt-get clean && \
  rm -rf \
 	/tmp/* \
