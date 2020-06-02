@@ -5,8 +5,8 @@ service:
 mqtt:
     host: mqtt
     port: 1883
-    user: 
-    passwd: 
+    user: koos
+    passwd: karman
     topic: aircon
 
 ##Devices
