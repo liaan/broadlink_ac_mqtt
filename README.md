@@ -52,7 +52,7 @@ to set values just publish to /aircon/mac_address/option/value/set  new_value  :
 
 Enable MQTT autodisocvery:
 
-Edit config.yml and add below if not there. If already there, then make sure prefix matches config.yml file settings
+Edit config.yml and add below if not there. If already there, then make sure prefix matches configuration.yml file settings (in HA)
 
 ```
 mqtt:
