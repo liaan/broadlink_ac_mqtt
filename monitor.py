@@ -310,7 +310,7 @@ class AcToMqtt:
 				logger.debug("Fanspeed on has invalid value %s",value)
 				return
 				
-		elif function == "homekit":
+		elif function == "mode_homekit":
 			
 			status = self.device_objects[address].set_homekit_mode(value)
 			if status :
