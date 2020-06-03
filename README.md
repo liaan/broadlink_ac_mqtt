@@ -33,7 +33,7 @@ optional arguments:  This should overide the config file (not tested )
 
 example: Run in background
 ./monitor.py -b
-run with full debugging (logs to error.log)
+run with full debugging (logs to ac_to_mqtt.log in folder where monitor.py is located)
 ./monitor.py -d
 
 Dump all discovered devices so one can copy paste
