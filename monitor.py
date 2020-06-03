@@ -156,6 +156,7 @@ class AcToMqtt:
 				,"mode_state_topic" : self.config["mqtt_topic_prefix"]  + device.status["macaddress"]+"/mode_homeassistant/value"	
 				,"temperature_state_topic" : self.config["mqtt_topic_prefix"]  + device.status["macaddress"]+"/temp/value"	
 				,"fan_mode_state_topic" : self.config["mqtt_topic_prefix"]  + device.status["macaddress"]+"/fanspeed_homeassistant/value"	
+				,"fan_modes": ["Auto","Low","Medium", "High"]
 				,"modes": ["off","cool","heat","fan_only","dry"]
 				,"max_temp":32.0
 				,"min_temp":16.0
