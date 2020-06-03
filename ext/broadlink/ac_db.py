@@ -280,10 +280,10 @@ class ac_db(device):
 			AUTO 	= 	0b00000101  
 		
 		class FAN_HOMEASSISTANT:  ##home assistant all lowercase
-			low 	= 	0b00000011
-			medium 	= 	0b00000010
-			high 	=	0b00000001
-			auto 	= 	0b00000101  
+			Low 	= 	0b00000011
+			Medium 	= 	0b00000010
+			High 	=	0b00000001
+			Auto 	= 	0b00000101  
 				
 		class MODE:
 			COOLING	=	0b00000001
