@@ -6,6 +6,7 @@ Dunham bush aircons and might work Rinnai.  Broadlink devtype == 0x4E2a (20010)
 python
 python-pip
 ```
+
 ### Python pip Requirements
 ```
 paho-mqtt
@@ -13,9 +14,14 @@ pyyaml
 pycrypto
 ```
 Install the python pip packages with `python pip install paho-mqtt pyyaml pycrypto`
+
 ## Usage
-simply run monitor.py , will discover all aircons and publish to specified MQTT server
-errors logs to file error.log
+
+1. copy sample_config.ym_ to config.yml
+2. Edit config to match your enviroment
+3. run ./monitor.py
+
+If you lazy and just want to copy and paste your devices, use the -S option and discovered devicesconfig will be printed to screen for copy/paste
 
 ## Command line arguments: 
 
@@ -97,41 +103,15 @@ to set values just publish to /aircon/mac_address/option/value/set  new_value  :
 | `fanspeed` | `AUTO`, `LOW`, `MID`, `HIGH` | Sets the fans speed for the AC unit |
 
 # Home-Assistant
-AC2MQTT can be utilised with Home-Assistant using the [climate.mqtt](https://www.home-assistant.io/integrations/climate.mqtt/) integration.
+AC2MQTT can be utilised with Home-Assistant using MQTT auto-discovery (https://www.home-assistant.io/docs/mqtt/discovery/)
 
-In order to utilise AC2MQTT in Home-Assistant there is an additional MQTT value that must be used instead of `mode` as Home-Assistant expects the modes in a specific case.
+To enable MQTT autodisocvery:
 
-Instead of using `mode` for the mode commands, you'll need to use `homeassist` instead.
-
-An example of a Home-Assistant config using AC2MQTT is below.
+Edit config.yml and add below if not there. If already there, then make sure prefix matches configuration.yml file settings (in Home-Assistant)
 
 ```
-# configuration.yaml
-
-climate:
-  - platform: mqtt
-    name: Bedroom AC
-    modes:
-      - "off"
-      - "cool"
-      - "heat"
-    fan_modes:
-      - "auto"
-      - "high"
-      - "mid"
-      - "low"
-    power_command_topic: "/aircon/mac_address/power/set"
-    power_state_topic: "/aircon/mac_address/power/value"
-    payload_off: "OFF"
-    payload_on: "ON"
-    current_temperature_topic: "/aircon/mac_address/temp/value"
-    mode_command_topic: "/aircon/mac_address/homeassist/set"
-    mode_state_topic: "/aircon/mac_address/homeassist/value"
-    temperature_command_topic: "/aircon/mac_address/temp/set"
-    temperature_state_topic: "/aircon/mac_address/temp/value"
-    fan_mode_command_topic: "/aircon/mac_address/fanspeed/set"
-    fan_mode_state_topic: "/aircon/mac_address/fanspeed/value"
-    min_temp: 16
-    max_temp: 32
-    temp_step: 0.5
+mqtt:
+  discovery: true
+  discovery_prefix: homeassistant
+  
 ```
