@@ -69,8 +69,10 @@ services:
     volumes:
       - <path to data>:/config
     restart: unless-stopped
+
 ```
 The container needs to use the host network to ensure it runs on the same subnet as your AC units.
+
 
 Once the container starts you will need to edit your config.yml file with your MQTT host address and username/password.
 

@@ -21,35 +21,25 @@ pid_last_update = 0
 
 logger = logging.getLogger(__name__)
 softwareversion = 1.0
-
-mqtt_host = "mqtt"
-mqtt_port = 1883
-mqtt_client_id = "AcToMqtt"
-mqtt_password = False
-mqtt_user = False
-
 debug = False
-daemon_mode = False;
-update_interval = 30
-devices = {}
+
+ 
 
 #*****************************************  Main Class ************************************************
 class AcToMqtt:
-	
-	devices	= {}
-	global daemon_mode
-	discover_devices = {}
+	config  = {}
 	last_update = 0
-	
+	device_objects = {}
 	def __init__(self):
-		##dunno
-		""	 
-	
+		##
+		"" 
 		 
-	def discover(self):
-		self.discover_devices = broadlink.discover(timeout=5)			
+	def discover(self):		 
+		##Go discovery
+		discovered_devices = broadlink.discover(timeout=5)			
+		devices = {}
 		
-		if self.discover_devices == None:
+		if discovered_devices == None:
 			error_msg = "No Devices Found, make sure you on the same network segment"
 			if daemon_mode:
 				logger.debug(error_msg)
@@ -58,13 +48,15 @@ class AcToMqtt:
 			#print "nothing found"
 			sys.exit()
 			
-		for device in self.discover_devices:	
-			#print device.host
-			#print device.mac
+		##Make sure correct device id 
+		for device in discovered_devices:		  			
 			if device.devtype == 0x4E2a:
-				self.devices[device.status['macaddress']] = device
+				devices[device.status['macaddress']] = device
 				
+		
+		return devices
 			
+		
 				
 		#device = self.devices["a"]
 		#self.device = broadlink.ac_db(host=device.host, mac=device.mac,debug=False)				
@@ -76,22 +68,43 @@ class AcToMqtt:
 	def print_yaml_discovered_devices(self):	
 		print yaml.dump(self.discover_devices);
 		
-	def main (self):
-		global update_interval
-		 
-		
-		self._connect_mqtt()
-		last_update = 0;
-		if self.discover_devices == {}: 
-			self.discover()
-		
-		while daemon_mode:
+	def make_device_objects(self,device_list = None):
+		device_objects = {}
+		if  device_list == [] or device_list == None:
+			error_msg = " Cannot make device objects, empty list given"
+			logger.error(error_msg)
+			print error_msg
+			sys.exit()
 			
-			touch_pid_file()
-				
+		for device in device_list:			
+			device_objects[device['mac']] = broadlink.gendevice(devtype=0x4E2a, host=(device['ip'],device['port']),mac = bytearray.fromhex(device['mac']), name=device['name'])		
+		
+		return device_objects
+		
+	def main (self,config, devices = None):
+		 	
+		self.device_objects = devices		
+		self.config = config
+		
+		last_update = 0;
+		
+		##Connect to Mqtt
+		self._connect_mqtt()	
+		
+		
+		##If there no devices yet, go and find some
+		if 	devices == [] or devices == None:
+			print "No devices defined";
+			logger.error("No Devices defined, either enable discovery or add them to config");
+			sys.exit()
+		
+		while True:
+			##we are alive ##Update PID file
+			touch_pid_file()	
+			
 		
 			##Just check status on every update interval
-			if (last_update + update_interval) > time.time():
+			if (last_update + self.config["update_interval"]) > time.time():
 				#logger.debug("Timeout not done, so lets wait a abit : %s : %s" %(last_update + update_interval,time.time()))				
 				time.sleep(0.5)
 				continue
@@ -99,10 +112,11 @@ class AcToMqtt:
 			
 			try:
 				last_update = time.time();
-				##Update PID file
 				
 				
-				for device in self.discover_devices:
+				
+				for device in devices.values():
+				
 					##Get the status, the global update interval is used as well to reduce requests to aircons as they slow
 					status = device.get_ac_status()								
 					#print status
@@ -117,6 +131,9 @@ class AcToMqtt:
 				##Something went wrong, so just exit and let system restart	
 				continue;
 			
+			##Exit if not daemon_mode
+			if self.config["daemon_mode"] != True:
+				break
 			##Set last update 
 			
 				
@@ -126,8 +143,8 @@ class AcToMqtt:
 			##Publish all values in status
 			for value,key in enumerate(status):
 				pubResult = self._publish(status['macaddress']+'/'+key+ '/value',bytes(status[key]))			
-				if pubResult != None:
-					
+				
+				if pubResult != None:					
 					logger.warning('Publishing Result: "%s"' % mqtt.error_string(pubResult))
 					if pubResult == mqtt.MQTT_ERR_NO_CONN:
 						self._connect_mqtt();
@@ -140,50 +157,49 @@ class AcToMqtt:
 				
 	def _publish(self,topic,value):
 
-			topic = '/aircon/' + topic
-			payload = value
-			logger.debug('publishing on topic "%s", data "%s"' % (topic, payload))			
-			pubResult = self._mqtt.publish(topic, payload=payload, qos=0, retain=False)
-			
-			##If there error, then debug log and return not None
-			if pubResult[0] != 0:				
-				logger.debug('Publishing Result: "%s"' % mqtt.error_string(pubResult[0]))
-				return pubResult[0]
-				
-			
-				
-			
+		topic = '/aircon/' + topic
+		payload = value
+		logger.debug('publishing on topic "%s", data "%s"' % (topic, payload))			
+		pubResult = self._mqtt.publish(topic, payload=payload, qos=0, retain=False)
+		
+		##If there error, then debug log and return not None
+		if pubResult[0] != 0:				
+			logger.debug('Publishing Result: "%s"' % mqtt.error_string(pubResult[0]))
+			return pubResult[0]
 			
 	def _connect_mqtt(self):
-	
+		
 		 
-			self._mqtt = mqtt.Client(client_id=mqtt_client_id, clean_session=True, userdata=None)
-			
-			##Set last will and testament
-			self._mqtt.will_set("/aircon/LWT","offline",True)
-			##Auth
-			
-			if mqtt_user:			
-				self._mqtt.username_pw_set(mqtt_user,mqtt_password)
-			
-			
-			
-			##Setup callbacks
-			self._mqtt.on_connect = self._on_mqtt_connect
-			self._mqtt.on_message = self._on_mqtt_message
-			self._mqtt.on_log = self._on_mqtt_log
-			self._mqtt.on_subscribed = self._mqtt_on_subscribe
-			
-			##Connect
-			logger.debug("Coneccting to MQTT: %s with client ID = %s" % (mqtt_host,mqtt_client_id))			
-			self._mqtt.connect_async(mqtt_host, port=mqtt_port, keepalive=60, bind_address="")
-			
-			##Start
-			self._mqtt.loop_start()  # creates new thread and runs Mqtt.loop_forever() in it.
+		self._mqtt = mqtt.Client(client_id=self.config["mqtt_client_id"], clean_session=True, userdata=None)
+		
+		
+		##Set last will and testament
+		self._mqtt.will_set("/aircon/LWT","offline",True)
+		##Auth
+		
+		#if self.config["mqtt_user"]:			
+		#	self._mqtt.username_pw_set(self.config["mqtt_user"],self.config["mqtt_password"])
+		
+		
+		
+		##Setup callbacks
+		self._mqtt.on_connect = self._on_mqtt_connect
+		self._mqtt.on_message = self._on_mqtt_message
+		self._mqtt.on_log = self._on_mqtt_log
+		self._mqtt.on_subscribed = self._mqtt_on_subscribe
+		
+		##Connect
+		logger.debug("Coneccting to MQTT: %s with client ID = %s" % (self.config["mqtt_host"],self.config["mqtt_client_id"]))			
+		self._mqtt.connect(self.config["mqtt_host"], port=self.config["mqtt_port"], keepalive=60, bind_address="")
+		
+		
+		##Start
+		self._mqtt.loop_start()  # creates new thread and runs Mqtt.loop_forever() in it.
 			
 	 
 
 	def _on_mqtt_log(self,client, userdata, level, buf):
+		 
 		if level == mqtt.MQTT_LOG_ERR:
 			logger.debug("Mqtt log" + buf)
 		
@@ -209,8 +225,8 @@ class AcToMqtt:
 		##Process received		##Probably need to exit here as well if command not send, but should exit on status update above .. grr, hate stupid python
 		if function ==  "temp":	
 			try:
-				if self.devices.get(address):
-					status = self.devices[address].set_temperature(float(value))
+				if self.device_objects.get(address):
+					status = self.device_objects[address].set_temperature(float(value))
 					
 					if status :
 						self.publish_mqtt_info(status)
@@ -223,11 +239,11 @@ class AcToMqtt:
 			
 		elif function == "power":
 			if value.lower() == "on":
-				status = self.devices[address].switch_on()
+				status = self.device_objects[address].switch_on()
 				if status :
 					self.publish_mqtt_info(status)
 			elif value.lower() == "off":
-				status = self.devices[address].switch_off()
+				status = self.device_objects[address].switch_off()
 				if status :
 					self.publish_mqtt_info(status)
 			else:
@@ -236,7 +252,7 @@ class AcToMqtt:
 				
 		elif function == "mode":
 			
-			status = self.devices[address].set_mode(value)
+			status = self.device_objects[address].set_mode(value)
 			if status :
 				self.publish_mqtt_info(status)
 				
@@ -245,7 +261,7 @@ class AcToMqtt:
 				return
 		elif function == "fanspeed":
 			
-			status = self.devices[address].set_fanspeed(value)
+			status = self.device_objects[address].set_fanspeed(value)
 			if status :
 				self.publish_mqtt_info(status)
 				
@@ -254,7 +270,7 @@ class AcToMqtt:
 				return
 		elif function == "homekit":
 			
-			status = self.devices[address].set_homekit_status(value)
+			status = self.device_objects[address].set_homekit_status(value)
 			if status :
 				self.publish_mqtt_info(status)
 				
@@ -263,7 +279,7 @@ class AcToMqtt:
 				return
 		elif function == "homeassist":
 			
-			status = self.devices[address].set_homeassist_status(value)
+			status = self.device_objects[address].set_homeassist_status(value)
 			if status :
 				self.publish_mqtt_info(status)
 				
@@ -301,36 +317,57 @@ class AcToMqtt:
 #*****************************************************************************************************
 #*****************************************  Get going methods ************************************************
 
+def discover_and_dump_for_config():
+	actomqtt = AcToMqtt();
+	devices = actomqtt.discover();
+	yaml_devices = []
+	if devices == {}:
+		print "No devices found, make sure you are on same network broadcast segment as device/s"
+		sys.exit()
 	
-def apply_config(PrintConfig = False):
-	global daemon_mode
-	global mqtt_host
-	global mqtt_port
-	global mqtt_client
-	global mqtt_user
-	global mqtt_password
-	global update_interval
+	print "*********** start copy below ************"
+	for device in devices.values():
+		yaml_devices.append(
+			{'name':device.name.encode('ascii','ignore'),
+			'ip':device.host[0]
+			,'port':device.host[1]
+			,'mac':device.status['macaddress']}
+			)
+		
+	print yaml.dump({'devices':yaml_devices})
+	print "*********** stop copy above ************"
+		
+	sys.exit();
 	
+def read_config():
+	
+	config = {} 
 	##Load config
 	
 	with open(os.path.dirname(os.path.realpath(__file__))+'/config.yml', "r") as ymlfile:
-		config = yaml.load(ymlfile,Loader=yaml.SafeLoader)
-
-	daemon_mode = config["service"]["daemon_mode"]
-	update_interval = config["service"]["update_interval"]	
-	mqtt_host = config["mqtt"]["host"]
-	mqtt_port = config["mqtt"]["port"]
-	mqtt_user = config["mqtt"]["user"]
-	mqtt_password = config["mqtt"]["passwd"]
-
+		config_file = yaml.load(ymlfile,Loader=yaml.SafeLoader)
+	 
+	##Service settings
+	config["daemon_mode"] = config_file["service"]["daemon_mode"]
+	config["update_interval"] = config_file["service"]["update_interval"]	
+	config["self_discovery"] = config_file["service"]["self_discovery"]	
+	
+	##Mqtt settings
+	config["mqtt_host"] = config_file["mqtt"]["host"]
+	config["mqtt_port"] = config_file["mqtt"]["port"]
+	config["mqtt_user"]= config_file["mqtt"]["user"]
+	config["mqtt_password"] = config_file["mqtt"]["passwd"]
+	config["mqtt_client_id"] = config_file["mqtt"]["client_id"]
+	 
+	##Devices	 
+	if config_file['devices'] != None:
+		config["devices"] = config_file['devices']
+	else:
+		config["devices"] = None
 
 	
-	if(PrintConfig):
-		print(config["mqtt"])
-		print(config["service"])
-		print(config["devices"])
 	
-	return
+	return config
 				
 def touch_pid_file():
 	global pid_last_update
@@ -373,15 +410,15 @@ def stop_if_already_running():
 #################  Main startup ####################
 				
 def main():
-		global ac_host
-		global mqtt_port
-		global mqtt_host
-		global ac_mac
-		global ac_port
-		global discover_devices
 		
+		##Just some defaults
+		##Defaults
+		
+		
+		daemon_mode = False;
+		update_interval = 30
+		devices = {}			
 		 
-		
 		##class
 		actomqtt = AcToMqtt();
 				
@@ -391,14 +428,17 @@ def main():
 		)
 
 		parser.add_argument("-d", "--debug", help="set logging level to debug",action="store_true",default=False)
-		parser.add_argument("-f", "--discover", help="Discover devices only",action="store_true",default=False)
+		parser.add_argument("-s", "--discover", help="Discover devices",action="store_true",default=False)
+		parser.add_argument("-S", "--discoverdump", help="Discover devices and dump config",action="store_true",default=False)
 		parser.add_argument("-b", "--background", help="Run in background",action="store_true",default=False)
 		
 		#parser.add_argument("-dh", "--devicehost", help='Aircon Host IP, Default: %s ' % ac_host)
 		#parser.add_argument("-dm", "--devicemac", help="Ac Mac Address, Default:  %s" % ac_mac)
 		
-		parser.add_argument("-ms", "--mqttserver", help='Mqtt Server, Default: %s ' % mqtt_host)
-		parser.add_argument("-mp", "--mqttport", help="Mqtt Port, Default:  %s" % mqtt_port)
+		parser.add_argument("-ms", "--mqttserver", help='Mqtt Server, Default:')
+		parser.add_argument("-mp", "--mqttport", help="Mqtt Port" )
+		parser.add_argument("-mU", "--mqttuser", help="Mqtt User" )
+		parser.add_argument("-mP", "--mqttpassword", help="Mqtt Password" )
 		parser.add_argument("-P", "--printconfig", help="Print config ",action="store_true")		
 		parser.add_argument("-w", "--writeconfig", help="Write to config",action="store_true")
 		
@@ -407,9 +447,12 @@ def main():
 		
 		# Init logging
 		
-		logging.basicConfig(filename=os.path.dirname(os.path.realpath(__file__))+'/acdb_mqtt.log',level=(logging.DEBUG if args.debug else logging.INFO),format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s')
+		logging.basicConfig(filename=os.path.dirname(os.path.realpath(__file__))+'/ac_to_mqtt.log',level=(logging.DEBUG if args.debug else logging.INFO),format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s')
 		#logging.basicConfig(filename='ac_to_mqtt.log',level=(logging.DEBUG if args.debug else logging.INFO),format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s')
 		
+		logger.debug("%s v%s is starting up" % (__file__, softwareversion))
+		logLevel = {0: 'NOTSET', 10: 'DEBUG', 20: 'INFO', 30: 'WARNING', 40: 'ERROR'}
+		logger.debug('Loglevel set to ' + logLevel[logging.getLogger().getEffectiveLevel()])
 		
 		
 		#if args.devicehost: 
@@ -422,44 +465,39 @@ def main():
 				
 	 
 		##Apply the config, then if arguments, override the config values with args
-		apply_config();
+		config = read_config();
 		
+		##Mqtt Host
 		if args.mqttserver:
-			mqtt_host = args.mqttserver
-			logger.debug("Host: %s"%mqtt_host)
-
+			config["mqtt_host"] = args.mqttserver
+			
+		##Mqtt Port
 		if args.mqttport:
-			mqtt_port = args.port
-			logger.debug("Port: %s"%mqttport)
-	
+			config["mqtt_port"] = args.mqttport
+		##Mqtt User
+		if args.mqttuser:
+			config["mqtt_user"] = args.mqttuser
 		
-		
-		##prtint config
-		if args.printconfig:	
-			apply_config(True)
-			sys.exit() 
-		
-		if args.writeconfig:
-			actomqtt.write_discovered()
-			sys.exit()
+		##Mqtt Password
+		if args.mqttpassword:
+			config["mqtt_password"] = args.mqttpassword
+		 
+		##Self Discovery
+		if args.discover:
+			config["self_discovery"] = True			
+	 
+		if args.discoverdump:
+			discover_and_dump_for_config()
 			
-		 	
-		if devices == None:
-			print "No devices defined, please run discovery or configure it in config.yml"
-			sys.exit()
-			
+		##Deamon Mode
 		if args.background:
-			daemon_mode = True
+			config["daemon_mode"] = True
 		
+		##Dump config
+		if args.printconfig:	
+			print config
+			sys.exit() 		
 		
-		if args.discover: 
-			actomqtt.discover()
-			sys.exit(); 
-				
-		logger.debug("%s v%s is starting up" % (__file__, softwareversion))
-		logLevel = {0: 'NOTSET', 10: 'DEBUG', 20: 'INFO', 30: 'WARNING', 40: 'ERROR'}
-		logger.debug('Loglevel set to ' + logLevel[logging.getLogger().getEffectiveLevel()])
-	 	
 		
 		##Make sure not already running		
 		stop_if_already_running()		
@@ -468,9 +506,14 @@ def main():
         # Start and run the mainloop
 		logger.debug("Starting mainloop, responding on only events")
 		
-	 
 		try:
-			actomqtt.main();
+			if config["self_discovery"]:	
+				devices = actomqtt.discover()
+			else:
+				devices = actomqtt.make_device_objects(config['devices'])
+			
+			##Run main
+			actomqtt.main(config,devices);
 		except KeyboardInterrupt:
 			logging.debug("User Keyboard interuped")
 		finally:
