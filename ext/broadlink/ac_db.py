@@ -10,52 +10,13 @@ import threading
 import parser
 import struct
 
-def gendevice(devtype, host, mac):
+def gendevice(devtype , host, mac,name=None, cloud=None):
   #print format(devtype,'02x')
-  if devtype == 0: # SP1
-    return sp1(host=host, mac=mac)
-  if devtype == 0x2711: # SP2
-    return sp2(host=host, mac=mac)
-  if devtype == 0x2719 or devtype == 0x7919 or devtype == 0x271a or devtype == 0x791a: # Honeywell SP2
-    return sp2(host=host, mac=mac)
-  if devtype == 0x2720: # SPMini
-    return sp2(host=host, mac=mac)
-  elif devtype == 0x753e: # SP3
-    return sp2(host=host, mac=mac)
-  elif devtype == 0x2728: # SPMini2
-    return sp2(host=host, mac=mac)
-  elif devtype == 0x2733 or devtype == 0x273e: # OEM branded SPMini
-    return sp2(host=host, mac=mac)
-  elif devtype >= 0x7530 and devtype <= 0x7918: # OEM branded SPMini2
-    return sp2(host=host, mac=mac)
-  elif devtype == 0x2736: # SPMiniPlus
-    return sp2(host=host, mac=mac)
-  elif devtype == 0x2712: # RM2
-    return rm(host=host, mac=mac)
-  elif devtype == 0x2737: # RM Mini
-    return rm(host=host, mac=mac)
-  elif devtype == 0x273d: # RM Pro Phicomm
-    return rm(host=host, mac=mac)
-  elif devtype == 0x2783: # RM2 Home Plus
-    return rm(host=host, mac=mac)
-  elif devtype == 0x277c: # RM2 Home Plus GDT
-    return rm(host=host, mac=mac)
-  elif devtype == 0x272a: # RM2 Pro Plus
-    return rm(host=host, mac=mac)
-  elif devtype == 0x2787: # RM2 Pro Plus2
-    return rm(host=host, mac=mac)
-  elif devtype == 0x278b: # RM2 Pro Plus BL
-    return rm(host=host, mac=mac)
-  elif devtype == 0x278f: # RM Mini Shate
-    return rm(host=host, mac=mac)
-  elif devtype == 0x2714: # A1
-    return a1(host=host, mac=mac)
-  elif devtype == 0x4EB5: # MP1
-    return mp1(host=host, mac=mac)
-  elif devtype == 0x4E2a: # Danham Bush
-    return ac_db(host=host, mac=mac)
+  ##We only care about 1 device type...
+  if devtype == 0x4E2a: # Danham Bush
+    return ac_db(host=host, mac=mac,name=name, cloud=cloud,devtype= devtype)
   else:
-    return device(host=host, mac=mac)
+    return device(host=host, mac=mac,devtype =devtype)
 
 def discover(timeout=None, local_ip_address=None):
   if local_ip_address is None:
@@ -115,10 +76,13 @@ def discover(timeout=None, local_ip_address=None):
   if timeout is None:
     response = cs.recvfrom(1024)
     responsepacket = bytearray(response[0])
-    host = response[1]
-    mac = responsepacket[0x3a:0x40]
+    host = response[1]	
+    mac = responsepacket[0x3a:0x40]	
     devtype = responsepacket[0x34] | responsepacket[0x35] << 8
-    return gendevice(devtype, host, mac)
+    name = responsepacket[0x40:].split(b'\x00')[0].decode('utf-8')
+    cloud = bool(responsepacket[-1])
+    cs.close()
+    return gendevice(devtype, host, mac,name=name,cloud=cloud)
   else:
     while (time.time() - starttime) < timeout:
       cs.settimeout(timeout - (time.time() - starttime))
@@ -129,21 +93,29 @@ def discover(timeout=None, local_ip_address=None):
       responsepacket = bytearray(response[0])
       
       #print ":".join("{:02x}".format(c) for c in responsepacket)
+      #print ":".join("{:c}".format(c) for c in responsepacket)
 
       host = response[1]
       devtype = responsepacket[0x34] | responsepacket[0x35] << 8
       mac = responsepacket[0x3a:0x40]
+      name = responsepacket[0x40:].split(b'\x00')[0].decode('utf-8')      
+      cloud = bool(responsepacket[-1])
 	  
-      dev = gendevice(devtype, host, mac)
+      dev = gendevice(devtype, host, mac,name=name,cloud=cloud)
       devices.append(dev)
+	  
+    cs.close()
     return devices
 
 
 class device:
-  def __init__(self, host, mac, timeout=10):
+  def __init__(self, host, mac, timeout=10,name=None,cloud=None,devtype=None):
     self.host = host
     self.mac = mac
+    self.name = name    
+    self.cloud = cloud
     self.timeout = timeout
+    self.devtype = devtype
     self.count = random.randrange(0xffff)
     self.key = bytearray([0x09, 0x76, 0x28, 0x34, 0x3f, 0xe9, 0x9e, 0x23, 0x76, 0x5c, 0x15, 0x13, 0xac, 0xcf, 0x8b, 0x02])
     self.iv = bytearray([0x56, 0x2e, 0x17, 0x99, 0x6d, 0x09, 0x3d, 0x28, 0xdd, 0xb3, 0xba, 0x69, 0x5a, 0x2e, 0x6f, 0x58])
@@ -268,223 +240,12 @@ class device:
     return bytearray(response[0])
 
 
-class mp1(device):
-  def __init__ (self, host, mac):
-    device.__init__(self, host, mac)
-    self.type = "MP1"
-
-  def set_power_mask(self, sid_mask, state):
-    """Sets the power state of the smart power strip."""
-
-    packet = bytearray(16)
-    packet[0x00] = 0x0d
-    packet[0x02] = 0xa5
-    packet[0x03] = 0xa5
-    packet[0x04] = 0x5a
-    packet[0x05] = 0x5a
-    packet[0x06] = 0xb2 + ((sid_mask<<1) if state else sid_mask)
-    packet[0x07] = 0xc0
-    packet[0x08] = 0x02
-    packet[0x0a] = 0x03
-    packet[0x0d] = sid_mask
-    packet[0x0e] = sid_mask if state else 0
-
-    response = self.send_packet(0x6a, packet)
-
-    err = response[0x22] | (response[0x23] << 8)
-
-  def set_power(self, sid, state):
-    """Sets the power state of the smart power strip."""
-    sid_mask = 0x01 << (sid - 1)
-    return self.set_power_mask(sid_mask, state)
-
-  def check_power(self):
-    """Returns the power state of the smart power strip."""
-    packet = bytearray(16)
-    packet[0x00] = 0x0a
-    packet[0x02] = 0xa5
-    packet[0x03] = 0xa5
-    packet[0x04] = 0x5a
-    packet[0x05] = 0x5a
-    packet[0x06] = 0xae
-    packet[0x07] = 0xc0
-    packet[0x08] = 0x01
-
-    response = self.send_packet(0x6a, packet)
-    err = response[0x22] | (response[0x23] << 8)
-    if err == 0:
-      aes = AES.new(bytes(self.key), AES.MODE_CBC, bytes(self.iv))
-      payload = aes.decrypt(bytes(response[0x38:]))
-      if type(payload[0x4]) == int:
-        state = payload[0x0e]
-      else:
-        state = ord(payload[0x0e])
-      data = {}
-      data['s1'] = bool(state & 0x01)
-      data['s2'] = bool(state & 0x02)
-      data['s3'] = bool(state & 0x04)
-      data['s4'] = bool(state & 0x08)
-      return data
-
-
-class sp1(device):
-  def __init__ (self, host, mac):
-    device.__init__(self, host, mac)
-    self.type = "SP1"
-
-  def set_power(self, state):
-    packet = bytearray(4)
-    packet[0] = state
-    self.send_packet(0x66, packet)
-
-
-class sp2(device):
-  def __init__ (self, host, mac):
-    device.__init__(self, host, mac)
-    self.type = "SP2"
-
-  def set_power(self, state):
-    """Sets the power state of the smart plug."""
-    packet = bytearray(16)
-    packet[0] = 2
-    packet[4] = 1 if state else 0
-    self.send_packet(0x6a, packet)
-
-  def check_power(self):
-    """Returns the power state of the smart plug."""
-    packet = bytearray(16)
-    packet[0] = 1
-    response = self.send_packet(0x6a, packet)
-    err = response[0x22] | (response[0x23] << 8)
-    if err == 0:
-      aes = AES.new(bytes(self.key), AES.MODE_CBC, bytes(self.iv))
-      payload = aes.decrypt(bytes(response[0x38:]))
-      return bool(payload[0x4])
-
-class a1(device):
-  def __init__ (self, host, mac):
-    device.__init__(self, host, mac)
-    self.type = "A1"
-
-  def check_sensors(self):
-    packet = bytearray(16)
-    packet[0] = 1
-    response = self.send_packet(0x6a, packet)
-    err = response[0x22] | (response[0x23] << 8)
-    if err == 0:
-      data = {}
-      aes = AES.new(bytes(self.key), AES.MODE_CBC, bytes(self.iv))
-      payload = aes.decrypt(bytes(response[0x38:]))
-      if type(payload[0x4]) == int:
-        data['temperature'] = (payload[0x4] * 10 + payload[0x5]) / 10.0
-        data['humidity'] = (payload[0x6] * 10 + payload[0x7]) / 10.0
-        light = payload[0x8]
-        air_quality = payload[0x0a]
-        noise = payload[0xc]
-      else:
-        data['temperature'] = (ord(payload[0x4]) * 10 + ord(payload[0x5])) / 10.0
-        data['humidity'] = (ord(payload[0x6]) * 10 + ord(payload[0x7])) / 10.0
-        light = ord(payload[0x8])
-        air_quality = ord(payload[0x0a])
-        noise = ord(payload[0xc])
-      if light == 0:
-        data['light'] = 'dark'
-      elif light == 1:
-        data['light'] = 'dim'
-      elif light == 2:
-        data['light'] = 'normal'
-      elif light == 3:
-        data['light'] = 'bright'
-      else:
-        data['light'] = 'unknown'
-      if air_quality == 0:
-        data['air_quality'] = 'excellent'
-      elif air_quality == 1:
-        data['air_quality'] = 'good'
-      elif air_quality == 2:
-        data['air_quality'] = 'normal'
-      elif air_quality == 3:
-        data['air_quality'] = 'bad'
-      else:
-        data['air_quality'] = 'unknown'
-      if noise == 0:
-        data['noise'] = 'quiet'
-      elif noise == 1:
-        data['noise'] = 'normal'
-      elif noise == 2:
-        data['noise'] = 'noisy'
-      else:
-        data['noise'] = 'unknown'
-      return data
-
-  def check_sensors_raw(self):
-    packet = bytearray(16)
-    packet[0] = 1
-    response = self.send_packet(0x6a, packet)
-    err = response[0x22] | (response[0x23] << 8)
-    if err == 0:
-      data = {}
-      aes = AES.new(bytes(self.key), AES.MODE_CBC, bytes(self.iv))
-      payload = aes.decrypt(bytes(response[0x38:]))
-      if type(payload[0x4]) == int:
-        data['temperature'] = (payload[0x4] * 10 + payload[0x5]) / 10.0
-        data['humidity'] = (payload[0x6] * 10 + payload[0x7]) / 10.0
-        data['light'] = payload[0x8]
-        data['air_quality'] = payload[0x0a]
-        data['noise'] = payload[0xc]
-      else:
-        data['temperature'] = (ord(payload[0x4]) * 10 + ord(payload[0x5])) / 10.0
-        data['humidity'] = (ord(payload[0x6]) * 10 + ord(payload[0x7])) / 10.0
-        data['light'] = ord(payload[0x8])
-        data['air_quality'] = ord(payload[0x0a])
-        data['noise'] = ord(payload[0xc])
-      return data
-
-
-class rm(device):
-  def __init__ (self, host, mac):
-    device.__init__(self, host, mac)
-    self.type = "RM2"
-
-  def check_data(self):
-    packet = bytearray(16)
-    packet[0] = 4
-    response = self.send_packet(0x6a, packet)
-    err = response[0x22] | (response[0x23] << 8)
-    if err == 0:
-      aes = AES.new(bytes(self.key), AES.MODE_CBC, bytes(self.iv))
-      payload = aes.decrypt(bytes(response[0x38:]))
-      return payload[0x04:]
-
-  def send_data(self, data):
-    packet = bytearray([0x02, 0x00, 0x00, 0x00])
-    packet += data
-    self.send_packet(0x6a, packet)
-
-  def enter_learning(self):
-    packet = bytearray(16)
-    packet[0] = 3
-    self.send_packet(0x6a, packet)
-
-  def check_temperature(self):
-    packet = bytearray(16)
-    packet[0] = 1
-    response = self.send_packet(0x6a, packet)
-    err = response[0x22] | (response[0x23] << 8)
-    if err == 0:
-      aes = AES.new(bytes(self.key), AES.MODE_CBC, bytes(self.iv))
-      payload = aes.decrypt(bytes(response[0x38:]))
-      if type(payload[0x4]) == int:
-        temp = (payload[0x4] * 10 + payload[0x5]) / 10.0
-      else:
-        temp = (ord(payload[0x4]) * 10 + ord(payload[0x5])) / 10.0
-      return temp
-	  
+ 
 class ac_db(device):
 	import logging
-	 
+	
 	type = "ac_db"
-	devtype =  0x4E2a
+	 
 	update_interval = 30
 	
 	class STATIC:
@@ -529,10 +290,10 @@ class ac_db(device):
 	
 	
  
-	def __init__ (self, host, mac,debug = False,update_interval = 30):			
-		device.__init__(self, host, mac)	
+	def __init__ (self, host, mac,name=None,cloud=None,debug = False,update_interval = 30,devtype=None):			
+		device.__init__(self, host, mac,name=name,cloud=cloud,devtype=devtype)	
 		
-		
+		devtype = devtype
 		self.status = {}		
 		self.logger = self.logging.getLogger(__name__)		
 		self.update_interval = update_interval
@@ -543,10 +304,12 @@ class ac_db(device):
 		self.set_default_values()		
 		self.status['macaddress'] = ''.join(format(x, '02x') for x in mac) 
 		self.status['hostip'] = host
+		self.status['devicename'] = name
+		
 		
 		self.logging.basicConfig(level=(self.logging.DEBUG if debug else self.logging.INFO))
 		self.logger.debug("Debugging Enabled");		
-			
+		
 		
 		
 		##Populate array with latest data
@@ -556,6 +319,7 @@ class ac_db(device):
 		
 		self.logger.debug("Getting current details in init")		
 		
+		##Get the current details
 		self.get_ac_status(force_update = True);
 
 	def get_ac_status(self,force_update = False):
@@ -590,6 +354,7 @@ class ac_db(device):
 		self.status['hostip'] = None
 		self.status['lastupdate'] = None
 		self.status['ambient_temp'] = None
+		self.status['devicename'] = None
 		debug  = 0;
 		
 		
@@ -713,11 +478,21 @@ class ac_db(device):
 		if err == 0:
 		  aes = AES.new(bytes(self.key), AES.MODE_CBC, bytes(self.iv))
 
+		  # response = bytearray.fromhex("5aa5aa555aa5aa55000000000000000000000000000000000000000000000000c6d000002a4e6a0055b9af41a70d43b401000000b9c00000aeaac104468cf91b485f38c67f7bf57f");
+		
 		  response_payload = aes.decrypt(bytes(response[0x38:]))
-
+		  response_payload = bytearray(response_payload)
+		  
+		   
+		  
+		  self.logger.debug ("Acinfo Raw Response: " + ' '.join(format(x, '08b') for x in response_payload )  )	
+		  self.logger.debug ("Acinfo Raw Hex: " + ' '.join(format(x, '02x') for x in response_payload )  )	
+		  #self.logger.debug ("Acinfo Raw Hex2: " + ' '.join(format(x, '02x') for x in response_payload )  )	
+		  #self.logger.debug ("Acinfo Raw Ascrii: " + ' '.join(format(x, 'c') for x in response )  )	
+		  
 		  #print "AC INFO Payload:" + response_payload+"\n"
 		  #print "AC INFO::" + ''.join(x.encode('hex') for x in response_payload )
-		  response_payload = bytearray(response_payload)
+		  
 		  
 		  
 		  #print "AC INFO Payload:" + response_payload+"\n"
@@ -742,7 +517,7 @@ class ac_db(device):
 	## GEt the current status of the aircon and parse into status array a one have to send full status each time for update, cannot just send one setting
 	##
 	def get_ac_states(self,force_update = False):    
-		GET_STATES =  bytearray.fromhex("0C00BB0006800000020011012B7E0000")  ##From app
+		GET_STATES =  bytearray.fromhex("0C00BB0006800000020011012B7E0000")  ##From app queryAuxinfo:bb0006800000020011012b7e
 		
 		##Check if the status is up to date to reduce timeout issues. Can be overwritten by force_update
 		if (force_update == False and (self.status['lastupdate'] + self.update_interval) > time.time()) :
@@ -766,8 +541,13 @@ class ac_db(device):
 				return False
 		
 			self.logger.debug ("" + ' '.join(format(x, '08b') for x in response_payload[9:] )  )	
+				
 			response_payload  = response_payload[2:]  ##Drop leading stuff as dont need
+			
+			self.logger.debug ("" + ' '.join(format(x, '02x') for x in response_payload )  )
 			#self.logger.debug ("" + ' '.join(format(x, '08b') for x in response_payload[9:] )  )
+			
+			#AuxInfo [tem=18, panMode=7, panType=1, nowTimeHour=5, setTem05=0, antoSenseYards=0, nowTimeMin=51, windSpeed=5, timerHour=0, voice=0, timerMin=0, mode=4, hasDew=0, hasSenseYards=0, hasSleep=0, isFollow=0, roomTem=0, roomHum=0, timeEnable=0, open=1, hasElectHeat=0, hasEco=0, hasClean=0, hasHealth=0, hasAir=0, weedSet=0, electronicLock=0, showDisplyBoard=1, mouldProof=0, controlMode=0, sleepMode=0]
 			
 			
 			self.status['temp'] = 8+ (response_payload[10]>>3) + (0.5 * float(response_payload[12]>>7))
@@ -815,6 +595,8 @@ class ac_db(device):
 		status_nice['clean'] = self.get_key(self.STATIC.ONOFF.__dict__,status['clean'])
 		
 		status_nice['macaddress'] = status['macaddress']
+		status_nice['device_name'] = status['devicename']
+		
 		##HomeKit topics
 		if self.status['power'] == self.STATIC.ONOFF.OFF:
 			status_nice['homekit'] = "Off"		
@@ -957,13 +739,4 @@ class ac_db(device):
 
 		return "done"
 
-	
-# For legay compatibility - don't use this
-class rm2(rm):
-  def __init__ (self):
-    device.__init__(self, None, None)
-
-  def discover(self):
-    dev = discover()
-    self.host = dev.host
-    self.mac = dev.mac
+ 
