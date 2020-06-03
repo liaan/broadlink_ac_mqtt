@@ -447,7 +447,7 @@ def main():
 		
 		# Init logging
 		
-		logging.basicConfig(filename=os.path.dirname(os.path.realpath(__file__))+'/acdb_mqtt.log',level=(logging.DEBUG if args.debug else logging.INFO),format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s')
+		logging.basicConfig(filename=os.path.dirname(os.path.realpath(__file__))+'/ac_to_mqtt.log',level=(logging.DEBUG if args.debug else logging.INFO),format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s')
 		#logging.basicConfig(filename='ac_to_mqtt.log',level=(logging.DEBUG if args.debug else logging.INFO),format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s')
 		
 		logger.debug("%s v%s is starting up" % (__file__, softwareversion))
