@@ -6,9 +6,12 @@ uses Pahoo MQTT so run :
 ```
 pip install paho-mqtt
 ```
+1: copy sample_config.ym_ to config.yml
+2: Edit config to match your enviroment
+3: run ./monitor.py
 
-simply run monitor.py , will discover all aircons and publish to specified MQTT server
-errors logs to file error.log
+If you lazy and just want to copy and paste your devices, use the -S option and discovered devicesconfig will be printed to screen for copy/paste
+
 
 command line arguments: 
 
