@@ -279,12 +279,7 @@ class ac_db(device):
 			HIGH 	=	0b00000001
 			AUTO 	= 	0b00000101  
 		
-		class FAN_HOMEASSISTANT:  ##home assistant all lowercase
-			Low 	= 	0b00000011
-			Medium 	= 	0b00000010
-			High 	=	0b00000001
-			Auto 	= 	0b00000101  
-				
+		 		
 		class MODE:
 			COOLING	=	0b00000001
 			DRY		=	0b00000010
@@ -617,7 +612,8 @@ class ac_db(device):
 		status_nice['health'] = self.get_key(self.STATIC.ONOFF.__dict__,status['health'])
 		status_nice['fixation_h'] = self.get_key(self.STATIC.FIXATION.VERTICAL.__dict__,status['fixation_h'])
 		status_nice['fanspeed']  = self.get_key(self.STATIC.FAN.__dict__,status['fanspeed'])
-		status_nice['fanspeed_homeassistant']  = self.get_key(self.STATIC.FAN_HOMEASSISTANT.__dict__,status['fanspeed'])
+		status_nice['fanspeed_homeassistant']  = status_nice['fanspeed'].capitalize()
+		
 		status_nice['ifeel'] = self.get_key(self.STATIC.ONOFF.__dict__,status['ifeel'])
 		status_nice['mute'] = self.get_key(self.STATIC.ONOFF.__dict__,status['mute'])
 		status_nice['turbo'] = self.get_key(self.STATIC.ONOFF.__dict__,status['turbo'])
