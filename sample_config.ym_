@@ -1,14 +1,26 @@
 service:
     daemon_mode: True
-    update_interval: 10
+    update_interval: 30
+    self_discovery: False
 
+##Mqtt Settings
 mqtt:
     host: mqtt
     port: 1883
+    client_id: ac_to_mqtt
     user: 
     passwd: 
-    topic: aircon
+    topic: aircon ##not used yet I think
 
 ##Devices
 devices:
-    
+
+- ip: 10.2.0.230
+  mac: b4430dce73f1
+  name: Living Room
+  port: 80
+
+- ip: 10.2.0.227
+  mac: b4430da741af
+  name: Office
+  port: 80
