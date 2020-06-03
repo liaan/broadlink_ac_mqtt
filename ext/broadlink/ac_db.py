@@ -78,6 +78,7 @@ def discover(timeout=None, local_ip_address=None):
     responsepacket = bytearray(response[0])
     host = response[1]	
     mac = responsepacket[0x3a:0x40]	
+    mac = mac[::-1]  ##Flip correct
     devtype = responsepacket[0x34] | responsepacket[0x35] << 8
     name = responsepacket[0x40:].split(b'\x00')[0].decode('utf-8')
     cloud = bool(responsepacket[-1])
@@ -98,6 +99,7 @@ def discover(timeout=None, local_ip_address=None):
       host = response[1]
       devtype = responsepacket[0x34] | responsepacket[0x35] << 8
       mac = responsepacket[0x3a:0x40]
+      mac = mac[::-1] ##flip Correct
       name = responsepacket[0x40:].split(b'\x00')[0].decode('utf-8')      
       cloud = bool(responsepacket[-1])
 	  
@@ -272,10 +274,16 @@ class ac_db(device):
 				OFF = 1
 			
 		class FAN:
-			LOW = 	0b00000011
-			MID = 	0b00000010
-			HIGH =	0b00000001
-			AUTO = 	0b00000101  
+			LOW 	= 	0b00000011
+			MEDIUM 	= 	0b00000010
+			HIGH 	=	0b00000001
+			AUTO 	= 	0b00000101  
+		
+		class FAN_HOMEASSISTANT:  ##home assistant all lowercase
+			low 	= 	0b00000011
+			medium 	= 	0b00000010
+			high 	=	0b00000001
+			auto 	= 	0b00000101  
 				
 		class MODE:
 			COOLING	=	0b00000001
@@ -299,12 +307,12 @@ class ac_db(device):
 		self.update_interval = update_interval
 		
 		##Set default values
-		mac = mac[::-1]
+		#mac = mac[::-1]
 		
 		self.set_default_values()		
 		self.status['macaddress'] = ''.join(format(x, '02x') for x in mac) 
 		self.status['hostip'] = host
-		self.status['devicename'] = name
+		self.status['name'] = name
 		
 		
 		self.logging.basicConfig(level=(self.logging.DEBUG if debug else self.logging.INFO))
@@ -407,7 +415,7 @@ class ac_db(device):
 			self.logger.debug("Not found mode value %s" , str(mode_text))
 			return False
 	
-	def set_homekit_status(self,status):
+	def set_homekit_mode(self,status):
 		if type(status) is not str:
 			self.logger.debug('Status variable is not string %s',type(status))
 			return False
@@ -429,6 +437,16 @@ class ac_db(device):
 			self.set_ac_status()
 			return self.make_nice_status(self.status)
 			
+		if status.lower() == 'dry':
+			self.status['mode'] = self.STATIC.MODE.DRY
+			self.status['power'] =  self.STATIC.ONOFF.ON
+			self.set_ac_status()
+			return self.make_nice_status(self.status)
+		if status.lower() == 'fan_only':
+			self.status['mode'] = self.STATIC.MODE.FAN
+			self.status['power'] =  self.STATIC.ONOFF.ON
+			self.set_ac_status()
+			return self.make_nice_status(self.status)
 		elif status.lower() == "off":
 			self.status['power'] =  self.STATIC.ONOFF.OFF
 			self.set_ac_status()
@@ -437,7 +455,7 @@ class ac_db(device):
 			self.logger.debug('Invalid status for homekit %s',status)
 			return False
 			
-	def set_homeassist_status(self,status):
+	def set_homeassistant_mode(self,status):
 		if type(status) is not str:
 			self.logger.debug('Status variable is not string %s',type(status))
 			return False
@@ -458,7 +476,17 @@ class ac_db(device):
 			self.status['power'] =  self.STATIC.ONOFF.ON
 			self.set_ac_status()
 			return self.make_nice_status(self.status)
-			
+		
+		if status.lower() == 'dry':
+			self.status['mode'] = self.STATIC.MODE.DRY
+			self.status['power'] =  self.STATIC.ONOFF.ON
+			self.set_ac_status()
+			return self.make_nice_status(self.status)
+		if status.lower() == 'fan_only':
+			self.status['mode'] = self.STATIC.MODE.FAN
+			self.status['power'] =  self.STATIC.ONOFF.ON
+			self.set_ac_status()
+			return self.make_nice_status(self.status)
 		elif status.lower() == "off":
 			self.status['power'] =  self.STATIC.ONOFF.OFF
 			self.set_ac_status()
@@ -589,6 +617,7 @@ class ac_db(device):
 		status_nice['health'] = self.get_key(self.STATIC.ONOFF.__dict__,status['health'])
 		status_nice['fixation_h'] = self.get_key(self.STATIC.FIXATION.VERTICAL.__dict__,status['fixation_h'])
 		status_nice['fanspeed']  = self.get_key(self.STATIC.FAN.__dict__,status['fanspeed'])
+		status_nice['fanspeed_homeassistant']  = self.get_key(self.STATIC.FAN_HOMEASSISTANT.__dict__,status['fanspeed'])
 		status_nice['ifeel'] = self.get_key(self.STATIC.ONOFF.__dict__,status['ifeel'])
 		status_nice['mute'] = self.get_key(self.STATIC.ONOFF.__dict__,status['mute'])
 		status_nice['turbo'] = self.get_key(self.STATIC.ONOFF.__dict__,status['turbo'])
@@ -599,26 +628,31 @@ class ac_db(device):
 		
 		##HomeKit topics
 		if self.status['power'] == self.STATIC.ONOFF.OFF:
-			status_nice['homekit'] = "Off"		
+			status_nice['mode_homekit'] = "Off"		
 		elif status['power'] == self.STATIC.ONOFF.ON and status['mode'] == self.STATIC.MODE.AUTO :
-			status_nice['homekit'] = "Auto"		
+			status_nice['mode_homekit'] = "Auto"		
 		elif status['power'] == self.STATIC.ONOFF.ON and status['mode'] == self.STATIC.MODE.HEATING :
-			status_nice['homekit'] = "HeatOn"
+			status_nice['mode_homekit'] = "HeatOn"
 		elif status['power'] == self.STATIC.ONOFF.ON and status['mode'] == self.STATIC.MODE.COOLING :
-			status_nice['homekit'] = "CoolOn"
+			status_nice['mode_homekit'] = "CoolOn"
 		else:
-			status_nice['homekit'] = "Error"
+			status_nice['mode_homekit'] = "Error"
+			
 		##Home Assist topic	
 		if self.status['power'] == self.STATIC.ONOFF.OFF:
-			status_nice['homeassist'] = "off"		
+			status_nice['mode_homeassistant'] = "off"		
 		elif status['power'] == self.STATIC.ONOFF.ON and status['mode'] == self.STATIC.MODE.AUTO :
-			status_nice['homeassist'] = "auto"		
+			status_nice['mode_homeassistant'] = "auto"		
 		elif status['power'] == self.STATIC.ONOFF.ON and status['mode'] == self.STATIC.MODE.HEATING :
-			status_nice['homeassist'] = "heat"
+			status_nice['mode_homeassistant'] = "heat"
 		elif status['power'] == self.STATIC.ONOFF.ON and status['mode'] == self.STATIC.MODE.COOLING :
-			status_nice['homeassist'] = "cool"
+			status_nice['mode_homeassistant'] = "cool"
+		elif status['power'] == self.STATIC.ONOFF.ON and status['mode'] == self.STATIC.MODE.DRY :
+			status_nice['mode_homeassistant'] = "dry"
+		elif status['power'] == self.STATIC.ONOFF.ON and status['mode'] == self.STATIC.MODE.FAN :
+			status_nice['mode_homeassistant'] = "fan_only"
 		else:
-			status_nice['homeassist'] = "Error"
+			status_nice['mode_homeassistant'] = "Error"
  			
 			
 		return status_nice

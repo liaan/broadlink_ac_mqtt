@@ -11,6 +11,8 @@ import paho.mqtt.client as mqtt
 sys.path.insert(1, os.path.join(os.path.dirname(__file__), './ext/broadlink'))
 import ac_db as broadlink
 import tempfile
+import json
+
 
 pid = str(os.getpid())
 pidfile = tempfile.gettempdir() +"/ac_to_mqtt.pid"
@@ -30,8 +32,8 @@ class AcToMqtt:
 	config  = {}
 	last_update = 0
 	device_objects = {}
-	def __init__(self):
-		##
+	def __init__(self,config):
+		self.config = config
 		"" 
 		 
 	def discover(self):		 
@@ -80,19 +82,18 @@ class AcToMqtt:
 			device_objects[device['mac']] = broadlink.gendevice(devtype=0x4E2a, host=(device['ip'],device['port']),mac = bytearray.fromhex(device['mac']), name=device['name'])		
 		
 		return device_objects
-		
-	def main (self,config, devices = None):
+	
+	
+	def do_loop (self,config, devices = None):
 		 	
 		self.device_objects = devices		
 		self.config = config
 		
 		last_update = 0;
 		
-		##Connect to Mqtt
-		self._connect_mqtt()	
 		
 		
-		##If there no devices yet, go and find some
+		##If there no devices so throw error
 		if 	devices == [] or devices == None:
 			print "No devices defined";
 			logger.error("No Devices defined, either enable discovery or add them to config");
@@ -112,8 +113,6 @@ class AcToMqtt:
 			
 			try:
 				last_update = time.time();
-				
-				
 				
 				for device in devices.values():
 				
@@ -136,31 +135,62 @@ class AcToMqtt:
 				break
 			##Set last update 
 			
+	def publish_mqtt_auto_discovery(self,devices):
+		if 	devices == [] or devices == None:
+			print "No devices defined";
+			logger.error("No Devices defined, either enable discovery or add them to config");
+			sys.exit()
 				
+		for device in devices.values():
+			topic = self.config["mqtt_auto_discovery_topic"]+"/climate/"+device.status["macaddress"]+"/config"
+			
+			json_device = { 
+				"name":device.name.encode('ascii','ignore')
+				#,"power_command_topic" : self.config["mqtt_topic_prefix"]+  device.status["macaddress"]+"/power/set"
+				,"mode_command_topic" : self.config["mqtt_topic_prefix"]+  device.status["macaddress"]+"/mode_homeassistant/set"
+				,"temperature_command_topic" : self.config["mqtt_topic_prefix"]  + device.status["macaddress"]+"/temp/set"
+				,"fan_mode_command_topic" : self.config["mqtt_topic_prefix"] + device.status["macaddress"]+"/fanspeed_homeassistant/set"
+				,"action_topic" : self.config["mqtt_topic_prefix"] +  device.status["macaddress"]+"/homeassistant/set"
+				##Read values
+				,"current_temperature_topic" : self.config["mqtt_topic_prefix"]  + device.status["macaddress"]+"/ambient_temp/value"				
+				,"mode_state_topic" : self.config["mqtt_topic_prefix"]  + device.status["macaddress"]+"/mode_homeassistant/value"	
+				,"temperature_state_topic" : self.config["mqtt_topic_prefix"]  + device.status["macaddress"]+"/temp/value"	
+				,"fan_mode_state_topic" : self.config["mqtt_topic_prefix"]  + device.status["macaddress"]+"/fanspeed_homeassistant/value"	
+				,"modes": ["off","cool","heat","fan_only","dry"]
+				,"max_temp":32.0
+				,"min_temp":16.0
+				,"precision": 0.5
+			}
+			
+			self._publish(topic,json.dumps(json_device))
+			
+		 
+		#sys.exit();	
+		
+		
 				
 	def publish_mqtt_info(self,status):
-	
-			##Publish all values in status
-			for value,key in enumerate(status):
-				pubResult = self._publish(status['macaddress']+'/'+key+ '/value',bytes(status[key]))			
-				
-				if pubResult != None:					
-					logger.warning('Publishing Result: "%s"' % mqtt.error_string(pubResult))
-					if pubResult == mqtt.MQTT_ERR_NO_CONN:
-						self._connect_mqtt();
-						
-					break
-			return 
+			
+		##Publish all values in status
+		for value,key in enumerate(status):
+			pubResult = self._publish(self.config["mqtt_topic_prefix"] + status['macaddress']+'/'+key+ '/value',bytes(status[key]))			
+			
+			if pubResult != None:					
+				logger.warning('Publishing Result: "%s"' % mqtt.error_string(pubResult))
+				if pubResult == mqtt.MQTT_ERR_NO_CONN:
+					self._connect_mqtt();
+					
+				break
+		return 
 
-			#self._publish(binascii.hexlify(status['macaddress'])+'/'+ 'temp/value',status['temp']);
+		#self._publish(binascii.hexlify(status['macaddress'])+'/'+ 'temp/value',status['temp']);
 				
 				
-	def _publish(self,topic,value):
-
-		topic = '/aircon/' + topic
+	def _publish(self,topic,value,retain=False,qos=0):
+		
 		payload = value
 		logger.debug('publishing on topic "%s", data "%s"' % (topic, payload))			
-		pubResult = self._mqtt.publish(topic, payload=payload, qos=0, retain=False)
+		pubResult = self._mqtt.publish(topic, payload=payload, qos=qos, retain=retain)
 		
 		##If there error, then debug log and return not None
 		if pubResult[0] != 0:				
@@ -169,18 +199,17 @@ class AcToMqtt:
 			
 	def _connect_mqtt(self):
 		
-		 
+		##Setup client
 		self._mqtt = mqtt.Client(client_id=self.config["mqtt_client_id"], clean_session=True, userdata=None)
 		
 		
 		##Set last will and testament
 		self._mqtt.will_set("/aircon/LWT","offline",True)
-		##Auth
 		
-		#if self.config["mqtt_user"]:			
-		#	self._mqtt.username_pw_set(self.config["mqtt_user"],self.config["mqtt_password"])
-		
-		
+		##Auth		
+		if self.config["mqtt_user"] and self.config["mqtt_password"]:			
+			self._mqtt.username_pw_set(self.config["mqtt_user"],self.config["mqtt_password"])
+				
 		
 		##Setup callbacks
 		self._mqtt.on_connect = self._on_mqtt_connect
@@ -210,12 +239,13 @@ class AcToMqtt:
 		
 	
 		try:
-			logger.debug('message! userdata: %s, message %s' % (userdata, msg.topic+" "+str(msg.payload)))
+			logger.debug('Mqtt Message Received! Userdata: %s, Message %s' % (userdata, msg.topic+" "+str(msg.payload)))
 			##Function is second last
-			function = msg.topic.split('/')[-2]
+			function = msg.topic.split('/')[-2]			
 			address = msg.topic.split('/')[-3]
+			address = address.encode('ascii','ignore')
 			value = msg.payload
-			logger.debug('Function: %s, Address %s , value %s' %(function,address,value))			
+			logger.debug('Mqtt decoded --> Function: %s, Address: %s, value: %s' %(function,address,value))			
 	
 		except Exception as e:	
 			logger.critical(e)			
@@ -231,7 +261,7 @@ class AcToMqtt:
 					if status :
 						self.publish_mqtt_info(status)
 				else:
-					logger.debug("Device not on list of desocvered devices")
+					logger.debug("Device not on list of devices %s, type:%s" % (address,type(address)))
 					return
 			except Exception as e:	
 				logger.critical(e)
@@ -268,18 +298,29 @@ class AcToMqtt:
 			else:
 				logger.debug("Fanspeed on has invalid value %s",value)
 				return
-		elif function == "homekit":
+				
+		elif function == "fanspeed_homeassistant":
 			
-			status = self.device_objects[address].set_homekit_status(value)
+			status = self.device_objects[address].set_fanspeed(value)
 			if status :
 				self.publish_mqtt_info(status)
 				
 			else:
 				logger.debug("Fanspeed on has invalid value %s",value)
 				return
-		elif function == "homeassist":
+				
+		elif function == "homekit":
 			
-			status = self.device_objects[address].set_homeassist_status(value)
+			status = self.device_objects[address].set_homekit_mode(value)
+			if status :
+				self.publish_mqtt_info(status)
+				
+			else:
+				logger.debug("Fanspeed on has invalid value %s",value)
+				return
+		elif function == "mode_homeassistant":
+			
+			status = self.device_objects[address].set_homeassistant_mode(value)
 			if status :
 				self.publish_mqtt_info(status)
 				
@@ -313,7 +354,7 @@ class AcToMqtt:
 		client.subscribe(sub_topic)
 		logger.debug('Listing on %s for messages' % (sub_topic))
 		##LWT
-		self._publish('LWT','online')
+		self._publish(self.config["mqtt_topic_prefix"]+'LWT','online')
 #*****************************************************************************************************
 #*****************************************  Get going methods ************************************************
 
@@ -357,8 +398,14 @@ def read_config():
 	config["mqtt_port"] = config_file["mqtt"]["port"]
 	config["mqtt_user"]= config_file["mqtt"]["user"]
 	config["mqtt_password"] = config_file["mqtt"]["passwd"]
-	config["mqtt_client_id"] = config_file["mqtt"]["client_id"]
-	 
+	config["mqtt_client_id"] = config_file["mqtt"]["client_id"]	
+	config["mqtt_topic_prefix"] = config_file["mqtt"]["topic_prefix"]
+	config["mqtt_auto_discovery_topic"] = config_file["mqtt"]["auto_discovery_topic"]
+	
+	if config["mqtt_topic_prefix"] and config["mqtt_topic_prefix"].endswith("/") == False:
+		config["mqtt_topic_prefix"] = config["mqtt_topic_prefix"] + "/"
+		
+	
 	##Devices	 
 	if config_file['devices'] != None:
 		config["devices"] = config_file['devices']
@@ -419,8 +466,7 @@ def main():
 		update_interval = 30
 		devices = {}			
 		 
-		##class
-		actomqtt = AcToMqtt();
+		
 				
         # Argument parsing
 		parser = argparse.ArgumentParser(		
@@ -432,6 +478,7 @@ def main():
 		parser.add_argument("-S", "--discoverdump", help="Discover devices and dump config",action="store_true",default=False)
 		parser.add_argument("-b", "--background", help="Run in background",action="store_true",default=False)
 		
+		
 		#parser.add_argument("-dh", "--devicehost", help='Aircon Host IP, Default: %s ' % ac_host)
 		#parser.add_argument("-dm", "--devicemac", help="Ac Mac Address, Default:  %s" % ac_mac)
 		
@@ -439,6 +486,7 @@ def main():
 		parser.add_argument("-mp", "--mqttport", help="Mqtt Port" )
 		parser.add_argument("-mU", "--mqttuser", help="Mqtt User" )
 		parser.add_argument("-mP", "--mqttpassword", help="Mqtt Password" )
+		parser.add_argument("-Ma", "--mqtt_auto_discovery_topic", help="If specified, will Send the MQTT autodiscovery config for all devices to topic")
 		parser.add_argument("-P", "--printconfig", help="Print config ",action="store_true")		
 		parser.add_argument("-w", "--writeconfig", help="Write to config",action="store_true")
 		
@@ -481,7 +529,12 @@ def main():
 		##Mqtt Password
 		if args.mqttpassword:
 			config["mqtt_password"] = args.mqttpassword
-		 
+			
+		##Mqtt auto discovery topic
+		if args.mqtt_auto_discovery_topic:
+			config["mqtt_auto_discovery_topic"] = args.mqtt_auto_discovery_topic
+		  
+		
 		##Self Discovery
 		if args.discover:
 			config["self_discovery"] = True			
@@ -507,13 +560,27 @@ def main():
 		logger.debug("Starting mainloop, responding on only events")
 		
 		try:
+			##class
+			actomqtt = AcToMqtt(config);
+		
+			##Connect to Mqtt
+			actomqtt._connect_mqtt()	
+
+			
 			if config["self_discovery"]:	
 				devices = actomqtt.discover()
 			else:
 				devices = actomqtt.make_device_objects(config['devices'])
 			
-			##Run main
-			actomqtt.main(config,devices);
+
+ 			##Publish mqtt auto discovery if topic  set
+			if config["mqtt_auto_discovery_topic"]:
+				actomqtt.publish_mqtt_auto_discovery(devices)			
+		
+			
+			##Run main loop
+			actomqtt.do_loop(config,devices);
+			
 		except KeyboardInterrupt:
 			logging.debug("User Keyboard interuped")
 		finally:
