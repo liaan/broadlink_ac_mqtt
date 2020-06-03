@@ -7,18 +7,12 @@ mqtt:
     host: mqtt
     port: 1883
     client_id: ac_to_mqtt
-    user: koos
-    passwd: karman
+    user: 
+    passwd: 
     topic_prefix: /aircon
-    auto_discovery_topic: homeassistant
+    discovery: true
+    discovery_prefix: homeassistant
 
 ##Devices
 devices:
-- ip: 10.2.0.230
-  mac: b4430dce73f1
-  name: Living Room
-  port: 80
-- ip: 10.2.0.227
-  mac: b4430da741af
-  name: Office
-  port: 80
+
