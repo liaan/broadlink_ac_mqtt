@@ -49,7 +49,9 @@ to set values just publish to /aircon/mac_address/option/value/set  new_value  :
 ```
 
 *** Now MQTT autodiscovery workes for HomeAsssitant  (https://www.home-assistant.io/docs/mqtt/discovery/)
+
 Enable MQTT autodisocvery:
+
 Edit config.yml and add below if not there. If already there, then make sure prefix matches config.yml file settings
 
 ```
