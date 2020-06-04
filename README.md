@@ -68,7 +68,7 @@ to set values just publish to /aircon/mac_address/option/value/set  new_value  :
 
 # Home Assistant (www.home-assistant.io) Options
 
-*** Now MQTT autodiscovery workes for HomeAsssitant  (https://www.home-assistant.io/docs/mqtt/discovery/)
+### Now MQTT autodiscovery workes for HomeAsssitant  (https://www.home-assistant.io/docs/mqtt/discovery/)
 
 Enable MQTT autodisocvery:
 
@@ -82,7 +82,7 @@ mqtt:
 ```
 
 
-*** To add a device manually useing the configuration.yml in HA you can create a easy config to copy/paste by using -Hd (--dumphaconfig) . Just make sure your config.yml is updated with correct settings before running.
+### To add a device manually useing the configuration.yml in HA you can create a easy config to copy/paste by using -Hd (--dumphaconfig) . Just make sure your config.yml is updated with correct settings before running.
 
 This is also nice to verify the autoconfig is correct that gets sent to HA using mqtt autoconfig
 
