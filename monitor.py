@@ -22,7 +22,7 @@ pid_last_update = 0
 
 
 logger = logging.getLogger(__name__)
-softwareversion = 1.0
+softwareversion = "1.0.6"
 debug = False
 
  
@@ -517,7 +517,7 @@ def main():
 				
         # Argument parsing
 		parser = argparse.ArgumentParser(		
-			description='Duhnham Bush v%s: Mqtt publisher of Duhnham Bush on the Pi.' % softwareversion			
+			description='Aircon To MQTT v%s : Mqtt publisher of Duhnham Bush on the Pi.' % softwareversion			
 		)
 
 		parser.add_argument("-d", "--debug", help="set logging level to debug",action="store_true",default=False)
@@ -537,6 +537,8 @@ def main():
 		parser.add_argument("-Ma", "--mqtt_auto_discovery_topic", help="If specified, will Send the MQTT autodiscovery config for all devices to topic")
 		parser.add_argument("-P", "--printconfig", help="Print config ",action="store_true")		
 		parser.add_argument("-w", "--writeconfig", help="Write to config",action="store_true")
+		
+		parser.add_argument("-v", "--version", help="Print Verions",action="store_true")
 		
 		
 		args = parser.parse_args()
@@ -562,6 +564,11 @@ def main():
 	 
 		##Apply the config, then if arguments, override the config values with args
 		config = read_config();
+		
+		##Print verions
+		if args.version:
+			print "Monitor Version: %s, Class version:%s" % (softwareversion,broadlink.version)
+			sys.exit();
 		
 		##Mqtt Host
 		if args.mqttserver:
