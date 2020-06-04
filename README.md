@@ -11,6 +11,20 @@ pip install paho-mqtt
 3. run ./monitor.py
 
 If you lazy and just want to copy and paste your devices, use the -S option and discovered devicesconfig will be printed to screen for copy/paste
+Example:
+```
+root@berry1:~/ac_db# ./monitor.py -S
+*********** start copy below ************
+devices:
+- ip: 10.0.0.227
+  mac: b4430da741af
+  name: Office
+  port: 80
+
+*********** stop copy above ************
+
+
+```
 
 
 command line arguments: 
@@ -51,6 +65,8 @@ to set values just publish to /aircon/mac_address/option/value/set  new_value  :
 ```
 /aircon/b4430dce73f1/temp/set 20
 ```
+
+# Home Assistant (www.home-assistant.io) Options
 
 *** Now MQTT autodiscovery workes for HomeAsssitant  (https://www.home-assistant.io/docs/mqtt/discovery/)
 
