@@ -17,11 +17,12 @@ command line arguments:
 
 ```
 
-optional arguments:  This should overide the config file (not tested )
+optional arguments:
   -h, --help            show this help message and exit
   -d, --debug           set logging level to debug
   -s, --discover        Discover devices
   -S, --discoverdump    Discover devices and dump config
+  -Hd, --dumphaconfig   Dump the devices as a HA manual config entry
   -b, --background      Run in background
   -ms MQTTSERVER, --mqttserver MQTTSERVER
                         Mqtt Server, Default:
@@ -31,6 +32,9 @@ optional arguments:  This should overide the config file (not tested )
                         Mqtt User
   -mP MQTTPASSWORD, --mqttpassword MQTTPASSWORD
                         Mqtt Password
+  -Ma MQTT_AUTO_DISCOVERY_TOPIC, --mqtt_auto_discovery_topic MQTT_AUTO_DISCOVERY_TOPIC
+                        If specified, will Send the MQTT autodiscovery config
+                        for all devices to topic
   
 
 
@@ -61,3 +65,39 @@ mqtt:
   
 ```
 
+*** To add a device manually useing the configuration.yml in HA you can create a easy config to copy/paste by using -Hd (--dumphaconfig) . Just make sure your config.yml is updated
+
+Example:
+
+```
+root@berry1:~/ac_db# ./monitor.py -Hd
+ 
+*********** start copy below ****************
+climate:
+- action_topic: /aircon/b4430dce73f1/homeassistant/set
+  current_temperature_topic: /aircon/b4430dce73f1/ambient_temp/value
+  fan_mode_command_topic: /aircon/b4430dce73f1/fanspeed_homeassistant/set
+  fan_mode_state_topic: /aircon/b4430dce73f1/fanspeed_homeassistant/value
+  fan_modes:
+  - Auto
+  - Low
+  - Medium
+  - High
+  max_temp: 32.0
+  min_temp: 16.0
+  mode_command_topic: /aircon/b4430dce73f1/mode_homeassistant/set
+  mode_state_topic: /aircon/b4430dce73f1/mode_homeassistant/value
+  modes:
+  - 'off'
+  - cool
+  - heat
+  - fan_only
+  - dry
+  name: Living Room
+  platform: mqtt
+  precision: 0.5
+  temperature_command_topic: /aircon/b4430dce73f1/temp/set
+  temperature_state_topic: /aircon/b4430dce73f1/temp/value
+
+
+```
