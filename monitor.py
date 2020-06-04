@@ -134,18 +134,43 @@ class AcToMqtt:
 			if self.config["daemon_mode"] != True:
 				break
 			##Set last update 
-			
-	def publish_mqtt_auto_discovery(self,devices):
-		if 	devices == [] or devices == None:
-			print "No devices defined";
-			logger.error("No Devices defined, either enable discovery or add them to config");
-			sys.exit()
 				
+	def dump_homeassistant_config_from_devices(self,devices):
+	
+		
+		if devices == {}:
+			print "No devices defined"
+			sys.exit()
+		
+		devices_array = self.make_devices_array_from_devices(devices)
+		if devices_array ==  {}:
+			print "something went wrong, no devices found"
+			sys.exit();
+			
+		print "*********** start copy below ****************"		 
+		a = []
+		for key in devices_array:
+			##Echo					
+			device = devices_array[key]
+			device['platform'] = 'mqtt'			
+			a.append(device)
+		print yaml.dump({'climate':a})
+		print "**************** Start copy here ****************"
+		
+	def make_devices_array_from_devices(self,devices):
+		
+		devices_array = {}
+		
 		for device in devices.values():
 			topic = self.config["mqtt_auto_discovery_topic"]+"/climate/"+device.status["macaddress"]+"/config"
-			
-			json_device = { 
-				"name":device.name.encode('ascii','ignore')
+			if not device.name :
+				name = device.status["macaddress"]
+			else:
+				name = device.name.encode('ascii','ignore') 
+				
+				
+			device_array = { 
+				"name": name
 				#,"power_command_topic" : self.config["mqtt_topic_prefix"]+  device.status["macaddress"]+"/power/set"
 				,"mode_command_topic" : self.config["mqtt_topic_prefix"]+  device.status["macaddress"]+"/mode_homeassistant/set"
 				,"temperature_command_topic" : self.config["mqtt_topic_prefix"]  + device.status["macaddress"]+"/temp/set"
@@ -157,13 +182,34 @@ class AcToMqtt:
 				,"temperature_state_topic" : self.config["mqtt_topic_prefix"]  + device.status["macaddress"]+"/temp/value"	
 				,"fan_mode_state_topic" : self.config["mqtt_topic_prefix"]  + device.status["macaddress"]+"/fanspeed_homeassistant/value"	
 				,"fan_modes": ["Auto","Low","Medium", "High"]
-				,"modes": ["off","cool","heat","fan_only","dry"]
+				,"modes": ['off',"cool","heat","fan_only","dry"]
 				,"max_temp":32.0
 				,"min_temp":16.0
 				,"precision": 0.5
 			}
 			
-			self._publish(topic,json.dumps(json_device))
+			devices_array[device.status["macaddress"]] = device_array
+			
+		return devices_array
+	
+	def publish_mqtt_auto_discovery(self,devices):
+		if 	devices == [] or devices == None:
+			print "No devices defined";
+			logger.error("No Devices defined, either enable discovery or add them to config");
+			sys.exit()
+		
+		##Make an array
+		devices_array = self.make_devices_array_from_devices(devices)
+		if devices_array == {}:
+			print "something went wrong, no devices found"
+			sys.exit();
+		
+		
+		for key in devices_array:
+			device = devices_array[key]			
+			topic = self.config["mqtt_auto_discovery_topic"]+"/climate/"+key+"/config"
+			##Publish
+			self._publish(topic,json.dumps(device))
 			
 		 
 		#sys.exit();	
@@ -477,6 +523,7 @@ def main():
 		parser.add_argument("-d", "--debug", help="set logging level to debug",action="store_true",default=False)
 		parser.add_argument("-s", "--discover", help="Discover devices",action="store_true",default=False)
 		parser.add_argument("-S", "--discoverdump", help="Discover devices and dump config",action="store_true",default=False)
+		parser.add_argument("-Hd", "--dumphaconfig",help="Dump the devices as a HA manual config entry",action="store_true",default=False)
 		parser.add_argument("-b", "--background", help="Run in background",action="store_true",default=False)
 		
 		
@@ -573,7 +620,10 @@ def main():
 			else:
 				devices = actomqtt.make_device_objects(config['devices'])
 			
-
+			if args.dumphaconfig:
+				actomqtt.dump_homeassistant_config_from_devices(devices)			
+				sys.exit();
+				
  			##Publish mqtt auto discovery if topic  set
 			if config["mqtt_auto_discovery_topic"]:
 				actomqtt.publish_mqtt_auto_discovery(devices)			
