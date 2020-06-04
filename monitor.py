@@ -359,8 +359,8 @@ class AcToMqtt:
 #*****************************************************************************************************
 #*****************************************  Get going methods ************************************************
 
-def discover_and_dump_for_config():
-	actomqtt = AcToMqtt();
+def discover_and_dump_for_config(config):
+	actomqtt = AcToMqtt(config);
 	devices = actomqtt.discover();
 	yaml_devices = []
 	if devices == {}:
@@ -541,7 +541,7 @@ def main():
 			config["self_discovery"] = True			
 	 
 		if args.discoverdump:
-			discover_and_dump_for_config()
+			discover_and_dump_for_config(config)
 			
 		##Deamon Mode
 		if args.background:
