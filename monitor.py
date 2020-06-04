@@ -520,25 +520,31 @@ def main():
 			description='Aircon To MQTT v%s : Mqtt publisher of Duhnham Bush on the Pi.' % softwareversion			
 		)
 
-		parser.add_argument("-d", "--debug", help="set logging level to debug",action="store_true",default=False)
-		parser.add_argument("-s", "--discover", help="Discover devices",action="store_true",default=False)
-		parser.add_argument("-S", "--discoverdump", help="Discover devices and dump config",action="store_true",default=False)
-		parser.add_argument("-Hd", "--dumphaconfig",help="Dump the devices as a HA manual config entry",action="store_true",default=False)
-		parser.add_argument("-b", "--background", help="Run in background",action="store_true",default=False)
 		
+		
+		
+		
+		
+		##HomeAssistant stuff
+		parser.add_argument("-Hd", "--dumphaconfig",help="Dump the devices as a HA manual config entry",action="store_true",default=False)
+		parser.add_argument("-Hat", "--mqtt_auto_discovery_topic", help="If specified, will Send the MQTT autodiscovery config for all devices to topic")
+		parser.add_argument("-b", "--background", help="Run in background",action="store_true",default=False)
+		##Config helpers
+		parser.add_argument("-S", "--discoverdump", help="Discover devices and dump config",action="store_true",default=False)
 		
 		#parser.add_argument("-dh", "--devicehost", help='Aircon Host IP, Default: %s ' % ac_host)
 		#parser.add_argument("-dm", "--devicemac", help="Ac Mac Address, Default:  %s" % ac_mac)
-		
+		##MQTT stuff
 		parser.add_argument("-ms", "--mqttserver", help='Mqtt Server, Default:')
 		parser.add_argument("-mp", "--mqttport", help="Mqtt Port" )
 		parser.add_argument("-mU", "--mqttuser", help="Mqtt User" )
 		parser.add_argument("-mP", "--mqttpassword", help="Mqtt Password" )
-		parser.add_argument("-Ma", "--mqtt_auto_discovery_topic", help="If specified, will Send the MQTT autodiscovery config for all devices to topic")
-		parser.add_argument("-P", "--printconfig", help="Print config ",action="store_true")		
-		parser.add_argument("-w", "--writeconfig", help="Write to config",action="store_true")
 		
+		##Generic
+		parser.add_argument("-s", "--discover", help="Discover devices",action="store_true",default=False)
+		parser.add_argument("-d", "--debug", help="set logging level to debug",action="store_true",default=False)
 		parser.add_argument("-v", "--version", help="Print Verions",action="store_true")
+		
 		
 		
 		args = parser.parse_args()
@@ -601,11 +607,7 @@ def main():
 		if args.background:
 			config["daemon_mode"] = True
 		
-		##Dump config
-		if args.printconfig:	
-			print config
-			sys.exit() 		
-		
+	 
 		
 		##Make sure not already running		
 		stop_if_already_running()		
