@@ -283,7 +283,7 @@ class AcToMqtt:
 		
 		
 		##Set last will and testament
-		self._mqtt.will_set("/aircon/LWT","offline",True)
+		self._mqtt.will_set(self.config["mqtt_topic_prefix"]+"LWT","offline",True)
 		
 		##Auth		
 		if self.config["mqtt_user"] and self.config["mqtt_password"]:			
@@ -429,7 +429,7 @@ class AcToMqtt:
 		logger.debug('Mqtt connected! client=%s, userdata=%s, flags=%s, rc=%s' % (client, userdata, flags, rc))
 		# Subscribing in on_connect() means that if we lose the connection and
 		# reconnect then subscriptions will be renewed.
-		sub_topic = "/aircon/+/+/set"
+		sub_topic = self.config["mqtt_topic_prefix"]+"+/+/set"
 		client.subscribe(sub_topic)
 		logger.debug('Listing on %s for messages' % (sub_topic))
 		##LWT
