@@ -71,14 +71,14 @@ class AcToMqtt:
 		
 	
 	def print_yaml_discovered_devices(self):	
-		print yaml.dump(self.discover_devices);
+		print (yaml.dump(self.discover_devices));
 		
 	def make_device_objects(self,device_list = None):
 		device_objects = {}
 		if  device_list == [] or device_list == None:
 			error_msg = " Cannot make device objects, empty list given"
 			logger.error(error_msg)
-			print error_msg
+			print (error_msg)
 			sys.exit()
 			
 		for device in device_list:			
@@ -99,8 +99,8 @@ class AcToMqtt:
 		
 		##If there no devices so throw error
 		if 	devices == [] or devices == None:
-			print "No devices defined";
-			logger.error("No Devices defined, either enable discovery or add them to config");
+			print ("No devices defined")
+			logger.error("No Devices defined, either enable discovery or add them to config")
 			sys.exit()
 		
 		while True:
@@ -153,23 +153,23 @@ class AcToMqtt:
 	
 		
 		if devices == {}:
-			print "No devices defined"
+			print ("No devices defined")
 			sys.exit()
 		
 		devices_array = self.make_devices_array_from_devices(devices)
 		if devices_array ==  {}:
-			print "something went wrong, no devices found"
+			print ("something went wrong, no devices found")
 			sys.exit();
 			
-		print "*********** start copy below ****************"		 
+		print ("*********** start copy below ****************")
 		a = []
 		for key in devices_array:
 			##Echo					
 			device = devices_array[key]
 			device['platform'] = 'mqtt'			
 			a.append(device)
-		print yaml.dump({'climate':a})
-		print "**************** Start copy here ****************"
+		print (yaml.dump({'climate':a}))
+		print ("**************** Start copy here ****************")
 		
 	def make_devices_array_from_devices(self,devices):
 		
@@ -208,14 +208,14 @@ class AcToMqtt:
 	
 	def publish_mqtt_auto_discovery(self,devices):
 		if 	devices == [] or devices == None:
-			print "No devices defined";
+			print ("No devices defined")
 			logger.error("No Devices defined, either enable discovery or add them to config");
 			sys.exit()
 		
 		##Make an array
 		devices_array = self.make_devices_array_from_devices(devices)
 		if devices_array == {}:
-			print "something went wrong, no devices found"
+			print ("something went wrong, no devices found")
 			sys.exit();
 		
 		
@@ -442,10 +442,10 @@ def discover_and_dump_for_config(config):
 	devices = actomqtt.discover();
 	yaml_devices = []
 	if devices == {}:
-		print "No devices found, make sure you are on same network broadcast segment as device/s"
+		print ("No devices found, make sure you are on same network broadcast segment as device/s")
 		sys.exit()
 	
-	print "*********** start copy below ************"
+	print ("*********** start copy below ************")
 	for device in devices.values():
 		yaml_devices.append(
 			{'name':device.name.encode('ascii','ignore'),
@@ -454,8 +454,8 @@ def discover_and_dump_for_config(config):
 			,'mac':device.status['macaddress']}
 			)
 		
-	print yaml.dump({'devices':yaml_devices})
-	print "*********** stop copy above ************"
+	print (yaml.dump({'devices':yaml_devices}))
+	print ("*********** stop copy above ************")
 		
 	sys.exit();
 	
@@ -605,7 +605,7 @@ def main():
 		
 		##Print verions
 		if args.version:
-			print "Monitor Version: %s, Class version:%s" % (softwareversion,broadlink.version)
+			print ("Monitor Version: %s, Class version:%s" % (softwareversion,broadlink.version))
 			sys.exit();
 		
 		##Mqtt Host
