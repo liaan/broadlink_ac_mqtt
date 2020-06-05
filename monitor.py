@@ -49,7 +49,7 @@ class AcToMqtt:
 			if self.config["daemon_mode"]:
 				logger.debug(error_msg)
 			else:
-				print error_msg			
+				print (error_msg)
 			#print "nothing found"
 			sys.exit()
 			
