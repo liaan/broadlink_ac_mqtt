@@ -23,7 +23,6 @@ devices:
 
 *********** stop copy above ************
 
-
 ```
 
 
