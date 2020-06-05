@@ -106,10 +106,9 @@ def discover(timeout=None, local_ip_address=None):
       mac = mac[::-1] ##flip Correct
       name = responsepacket[0x40:].split(b'\x00')[0].decode('utf-8')      
       if not name:
-		name = mac
-	
-      cloud = bool(responsepacket[-1])
-	  
+        name = mac		
+      
+      cloud = bool(responsepacket[-1])      
       dev = gendevice(devtype, host, mac,name=name,cloud=cloud)
       devices.append(dev)
 	  
