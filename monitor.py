@@ -30,8 +30,11 @@ debug = False
 #*****************************************  Main Class ************************************************
 class AcToMqtt:
 	config  = {}
-	last_update = 0
+	 
 	device_objects = {}
+	previous_status = {}
+	last_update = {};
+	
 	def __init__(self,config):
 		self.config = config
 		"" 
@@ -79,7 +82,8 @@ class AcToMqtt:
 			sys.exit()
 			
 		for device in device_list:			
-			device_objects[device['mac']] = broadlink.gendevice(devtype=0x4E2a, host=(device['ip'],device['port']),mac = bytearray.fromhex(device['mac']), name=device['name'])		
+			device_objects[device['mac']] = broadlink.gendevice(devtype=0x4E2a, host=(device['ip'],device['port']),mac = bytearray.fromhex(device['mac']), name=device['name'],update_interval = self.config['update_interval'])		
+			
 		
 		return device_objects
 	
@@ -89,7 +93,7 @@ class AcToMqtt:
 		self.device_objects = devices		
 		self.config = config
 		
-		last_update = 0;
+		
 		
 		
 		
@@ -104,23 +108,33 @@ class AcToMqtt:
 			touch_pid_file()	
 			
 		
-			##Just check status on every update interval
-			if (last_update + self.config["update_interval"]) > time.time():
-				#logger.debug("Timeout not done, so lets wait a abit : %s : %s" %(last_update + update_interval,time.time()))				
-				time.sleep(0.5)
-				continue
 			
 			
 			try:
-				last_update = time.time();
 				
-				for device in devices.values():
+				for key in devices:
+					device = devices[key]
+					##Just check status on every update interval
+					if key in self.last_update:
+						if (self.last_update[key] + self.config["update_interval"]) > time.time():
+							logger.debug("Timeout %s not done, so lets wait a abit : %s : %s" %(self.config["update_interval"],self.last_update[key] + self.config["update_interval"],time.time()))				
+							time.sleep(0.5)
+							continue
+						else:
+							""
+							#print "timeout done"
+					
+					
 				
 					##Get the status, the global update interval is used as well to reduce requests to aircons as they slow
-					status = device.get_ac_status()								
+					status = device.get_ac_status()						
 					#print status
 					if status:
+						##Update last time checked
+						self.last_update[key] = time.time();
+						
 						self.publish_mqtt_info(status);
+						
 					else:
 						logger.debug("No status")
 				
@@ -217,9 +231,23 @@ class AcToMqtt:
 		
 				
 	def publish_mqtt_info(self,status):
-			
+		
 		##Publish all values in status
-		for value,key in enumerate(status):
+		for key in status:
+			value = status[key]			
+			##check if device already in previous_status
+			if status['macaddress'] in self.previous_status:
+				##Check if key in state
+				if key in self.previous_status[status['macaddress']]:					
+					##If the values are same, skip it to make mqtt less chatty #17
+					if self.previous_status[status['macaddress']][key] == value:
+						#print ("value same key:%s, value:%s vs : %s" %  (key,value,self.previous_status[status['macaddress']][key]))					
+						continue
+					else:
+						""
+						#print ("value NOT Same key:%s, value:%s vs : %s" %  (key,value,self.previous_status[status['macaddress']][key]))						
+				
+				
 			pubResult = self._publish(self.config["mqtt_topic_prefix"] + status['macaddress']+'/'+key+ '/value',bytes(status[key]))			
 			
 			if pubResult != None:					
@@ -228,6 +256,10 @@ class AcToMqtt:
 					self._connect_mqtt();
 					
 				break
+			
+		##Set previous to current
+		self.previous_status[status['macaddress']] = status
+		
 		return 
 
 		#self._publish(binascii.hexlify(status['macaddress'])+'/'+ 'temp/value',status['temp']);
@@ -510,7 +542,7 @@ def main():
 		
 		
 		daemon_mode = False;
-		update_interval = 30
+		
 		devices = {}			
 		 
 		
