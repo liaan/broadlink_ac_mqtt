@@ -46,7 +46,7 @@ class AcToMqtt:
 		
 		if discovered_devices == None:
 			error_msg = "No Devices Found, make sure you on the same network segment"
-			if daemon_mode:
+			if self.config["daemon_mode"]:
 				logger.debug(error_msg)
 			else:
 				print error_msg			
