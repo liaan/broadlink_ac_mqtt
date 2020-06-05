@@ -3,28 +3,21 @@ import os
 import time
 import sys
 import logging
-import commands
 import argparse
-import binascii
 import yaml
 import paho.mqtt.client as mqtt
-sys.path.insert(1, os.path.join(os.path.dirname(__file__), './ext/broadlink'))
-import ac_db as broadlink
 import tempfile
 import json
-
+sys.path.insert(1, os.path.join(os.path.dirname(__file__), './ext/broadlink'))
+import ac_db as broadlink
 
 pid = str(os.getpid())
-pidfile = tempfile.gettempdir() +"/ac_to_mqtt.pid"
+pidfile = tempfile.gettempdir() + "/ac_to_mqtt.pid"
 pid_stale_time = 60
 pid_last_update = 0
-
-
-
 logger = logging.getLogger(__name__)
-softwareversion = "1.0.6"
 debug = False
-
+softwareversion = "1.0.7"
  
 
 #*****************************************  Main Class ************************************************
@@ -49,7 +42,7 @@ class AcToMqtt:
 			if self.config["daemon_mode"]:
 				logger.debug(error_msg)
 			else:
-				print error_msg			
+				print (error_msg)
 			#print "nothing found"
 			sys.exit()
 			
@@ -71,14 +64,14 @@ class AcToMqtt:
 		
 	
 	def print_yaml_discovered_devices(self):	
-		print yaml.dump(self.discover_devices);
+		print (yaml.dump(self.discover_devices));
 		
 	def make_device_objects(self,device_list = None):
 		device_objects = {}
 		if  device_list == [] or device_list == None:
 			error_msg = " Cannot make device objects, empty list given"
 			logger.error(error_msg)
-			print error_msg
+			print (error_msg)
 			sys.exit()
 			
 		for device in device_list:			
@@ -93,22 +86,15 @@ class AcToMqtt:
 		self.device_objects = devices		
 		self.config = config
 		
-		
-		
-		
-		
 		##If there no devices so throw error
 		if 	devices == [] or devices == None:
-			print "No devices defined";
-			logger.error("No Devices defined, either enable discovery or add them to config");
+			print ("No devices defined")
+			logger.error("No Devices defined, either enable discovery or add them to config")
 			sys.exit()
 		
 		while True:
 			##we are alive ##Update PID file
 			touch_pid_file()	
-			
-		
-			
 			
 			try:
 				
@@ -149,27 +135,26 @@ class AcToMqtt:
 				break
 			##Set last update 
 				
-	def dump_homeassistant_config_from_devices(self,devices):
-	
+	def dump_homeassistant_config_from_devices(self,devices):	
 		
 		if devices == {}:
-			print "No devices defined"
+			print ("No devices defined")
 			sys.exit()
 		
 		devices_array = self.make_devices_array_from_devices(devices)
 		if devices_array ==  {}:
-			print "something went wrong, no devices found"
+			print ("something went wrong, no devices found")
 			sys.exit();
 			
-		print "*********** start copy below ****************"		 
+		print ("*********** start copy below ****************")
 		a = []
 		for key in devices_array:
 			##Echo					
 			device = devices_array[key]
 			device['platform'] = 'mqtt'			
 			a.append(device)
-		print yaml.dump({'climate':a})
-		print "**************** Start copy here ****************"
+		print (yaml.dump({'climate':a}))
+		print ("**************** Start copy here ****************")
 		
 	def make_devices_array_from_devices(self,devices):
 		
@@ -208,16 +193,15 @@ class AcToMqtt:
 	
 	def publish_mqtt_auto_discovery(self,devices):
 		if 	devices == [] or devices == None:
-			print "No devices defined";
+			print ("No devices defined")
 			logger.error("No Devices defined, either enable discovery or add them to config");
 			sys.exit()
 		
 		##Make an array
 		devices_array = self.make_devices_array_from_devices(devices)
 		if devices_array == {}:
-			print "something went wrong, no devices found"
-			sys.exit();
-		
+			print ("something went wrong, no devices found")
+			sys.exit();		
 		
 		for key in devices_array:
 			device = devices_array[key]			
@@ -314,8 +298,7 @@ class AcToMqtt:
 	def _mqtt_on_subscribe(self,client, userdata, mid, granted_qos):
 		logger.debug("Mqtt Subscribed")
 		
-	def _on_mqtt_message(self, client, userdata, msg):
-		
+	def _on_mqtt_message(self, client, userdata, msg):		
 	
 		try:
 			logger.debug('Mqtt Message Received! Userdata: %s, Message %s' % (userdata, msg.topic+" "+str(msg.payload)))
@@ -409,9 +392,6 @@ class AcToMqtt:
 		else:
 			logger.debug("No function match")
 			return
-		
-	
-		
 			
 	def _on_mqtt_connect(self, client, userdata, flags, rc):
 
@@ -442,10 +422,10 @@ def discover_and_dump_for_config(config):
 	devices = actomqtt.discover();
 	yaml_devices = []
 	if devices == {}:
-		print "No devices found, make sure you are on same network broadcast segment as device/s"
+		print ("No devices found, make sure you are on same network broadcast segment as device/s")
 		sys.exit()
 	
-	print "*********** start copy below ************"
+	print ("*********** start copy below ************")
 	for device in devices.values():
 		yaml_devices.append(
 			{'name':device.name.encode('ascii','ignore'),
@@ -454,8 +434,8 @@ def discover_and_dump_for_config(config):
 			,'mac':device.status['macaddress']}
 			)
 		
-	print yaml.dump({'devices':yaml_devices})
-	print "*********** stop copy above ************"
+	print (yaml.dump({'devices':yaml_devices}))
+	print ("*********** stop copy above ************")
 		
 	sys.exit();
 	
@@ -504,8 +484,7 @@ def touch_pid_file():
 	
 	pid_last_update = time.time() 
 	with open(pidfile, 'w') as f:
-		f.write("%s,%s" % (os. getpid() ,pid_last_update))
-	
+		f.write("%s,%s" % (os. getpid() ,pid_last_update))	
 	
 		
 def stop_if_already_running():
@@ -538,24 +517,15 @@ def stop_if_already_running():
 def main():
 		
 		##Just some defaults
-		##Defaults
-		
-		
-		daemon_mode = False;
-		
-		devices = {}			
-		 
+		##Defaults		
+		daemon_mode = False;		
+		devices = {}			 
 		
 				
         # Argument parsing
 		parser = argparse.ArgumentParser(		
 			description='Aircon To MQTT v%s : Mqtt publisher of Duhnham Bush on the Pi.' % softwareversion			
 		)
-
-		
-		
-		
-		
 		
 		##HomeAssistant stuff
 		parser.add_argument("-Hd", "--dumphaconfig",help="Dump the devices as a HA manual config entry",action="store_true",default=False)
@@ -576,8 +546,7 @@ def main():
 		parser.add_argument("-s", "--discover", help="Discover devices",action="store_true",default=False)
 		parser.add_argument("-d", "--debug", help="set logging level to debug",action="store_true",default=False)
 		parser.add_argument("-v", "--version", help="Print Verions",action="store_true")
-		
-		
+				
 		
 		args = parser.parse_args()
 		
@@ -589,15 +558,6 @@ def main():
 		logger.debug("%s v%s is starting up" % (__file__, softwareversion))
 		logLevel = {0: 'NOTSET', 10: 'DEBUG', 20: 'INFO', 30: 'WARNING', 40: 'ERROR'}
 		logger.debug('Loglevel set to ' + logLevel[logging.getLogger().getEffectiveLevel()])
-		
-		
-		#if args.devicehost: 
-		#		ac_host = args.devicehost
-		#		logger.debug("Host: %s"%ac_host)
-				
-		#if args.devicemac:
-		#		ac_mac = args.devicemac				
-         #       logger.debug("Mac: %s"%ac_mac)
 				
 	 
 		##Apply the config, then if arguments, override the config values with args
@@ -605,7 +565,7 @@ def main():
 		
 		##Print verions
 		if args.version:
-			print "Monitor Version: %s, Class version:%s" % (softwareversion,broadlink.version)
+			print ("Monitor Version: %s, Class version:%s" % (softwareversion,broadlink.version))
 			sys.exit();
 		
 		##Mqtt Host
@@ -638,8 +598,7 @@ def main():
 		##Deamon Mode
 		if args.background:
 			config["daemon_mode"] = True
-		
-	 
+			 
 		
 		##Make sure not already running		
 		stop_if_already_running()		
@@ -679,10 +638,7 @@ def main():
 			os.unlink(pidfile)
 			logging.info("Stopping Monitor...")
 
-			
-
-		
-	
+				
 if __name__ == "__main__":
 	
 	main()
