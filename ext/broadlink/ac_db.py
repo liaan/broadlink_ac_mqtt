@@ -12,13 +12,13 @@ import struct
 
 version = "1.0.1"
 
-def gendevice(devtype , host, mac,name=None, cloud=None):
+def gendevice(devtype , host, mac,name=None, cloud=None,update_interval = 0):
   #print format(devtype,'02x')
   ##We only care about 1 device type...
   if devtype == 0x4E2a: # Danham Bush
-    return ac_db(host=host, mac=mac,name=name, cloud=cloud,devtype= devtype)
+    return ac_db(host=host, mac=mac,name=name, cloud=cloud,devtype= devtype,update_interval = 0)
   else:
-    return device(host=host, mac=mac,devtype =devtype)
+    return device(host=host, mac=mac,devtype =devtype,update_interval = update_interval)
 
 def discover(timeout=None, local_ip_address=None):
   if local_ip_address is None:
@@ -118,7 +118,7 @@ def discover(timeout=None, local_ip_address=None):
 
 
 class device:
-  def __init__(self, host, mac, timeout=10,name=None,cloud=None,devtype=None):
+  def __init__(self, host, mac, timeout=10,name=None,cloud=None,devtype=None,update_interval=0):
     self.host = host
     self.mac = mac
     self.name = name    
@@ -135,6 +135,7 @@ class device:
     self.cs.bind(('',0))
     self.type = "Unknown"
     self.lock = threading.Lock()
+    self.update_interval = update_interval
 
   def auth(self):
     payload = bytearray(0x50)
@@ -254,8 +255,7 @@ class ac_db(device):
 	import logging
 	
 	type = "ac_db"
-	 
-	update_interval = 30
+	
 	
 	class STATIC:
 		##Static stuff
@@ -300,8 +300,8 @@ class ac_db(device):
 	
 	
  
-	def __init__ (self, host, mac,name=None,cloud=None,debug = False,update_interval = 30,devtype=None):			
-		device.__init__(self, host, mac,name=name,cloud=cloud,devtype=devtype)	
+	def __init__ (self, host, mac,name=None,cloud=None,debug = False,update_interval = 0,devtype=None):			
+		device.__init__(self, host, mac,name=name,cloud=cloud,devtype=devtype,update_interval=update_interval)	
 		
 		devtype = devtype
 		self.status = {}		
