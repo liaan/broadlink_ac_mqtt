@@ -2,7 +2,7 @@
 #### Air Conditioners compatibility 
   * Dunham bush --> Tested and working
   * Akai 9000BTU  --> Tested and working
-  * Rinnai  --> Not tested
+  * Rinnai  --> Tested and working .. autodiscovery name seems to be buggy
   * Kenwood --> In Testing
   * In theory any Broadlink devtype == 0x4E2a (20010)
 
