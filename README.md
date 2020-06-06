@@ -1,6 +1,7 @@
 # Broadlink Air Conditioners to mqtt .... very much still in dev(getting better)
 #### Air Conditioners compatibility 
   * Dunham bush --> Tested and working
+  * Rcool Solo --> Tested and working
   * Rinnai  --> Not tested
   * Kenwood --> In Testing
   * In theory any Broadlink devtype == 0x4E2a (20010)
@@ -11,10 +12,11 @@ uses Pahoo MQTT so run :
 
 ```
 pip install paho-mqtt
+pip install pyyaml
 ```
 1. copy sample_config.ym_ to config.yml
 2. Edit config to match your enviroment
-3. run ./monitor.py
+3. run ./monitor.py (or python monitor.py)
 
 If you lazy and just want to copy and paste your devices, use the -S option and discovered devicesconfig will be printed to screen for copy/paste
 Example:
