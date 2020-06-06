@@ -1,6 +1,7 @@
 # Broadlink Air Conditioners to mqtt .... very much still in dev(getting better)
 #### Air Conditioners compatibility 
   * Dunham bush --> Tested and working
+  * Akai 9000BTU  --> Tested and working
   * Rinnai  --> Not tested
   * Kenwood --> In Testing
   * In theory any Broadlink devtype == 0x4E2a (20010)
