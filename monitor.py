@@ -146,7 +146,7 @@ class AcToMqtt:
 			print ("something went wrong, no devices found")
 			sys.exit();
 			
-		print ("*********** start copy below ****************")
+		print ("*********** Start copy below ****************")
 		a = []
 		for key in devices_array:
 			##Echo					
@@ -154,7 +154,7 @@ class AcToMqtt:
 			device['platform'] = 'mqtt'			
 			a.append(device)
 		print (yaml.dump({'climate':a}))
-		print ("**************** Start copy here ****************")
+		print ("*********** Stop copy here ****************")
 		
 	def make_devices_array_from_devices(self,devices):
 		
