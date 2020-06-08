@@ -61,9 +61,9 @@ optional arguments:
   -d, --debug           set logging level to debug
   -v, --version         Print Verions
   -dir DATA_DIR, --data_dir DATA_DIR
-                        Data Folder
+                        Data Folder -- Default to folder script is located
   -c CONFIG, --config CONFIG
-                        Config file path
+                        Config file path -- Default to folder script is located + 'config.yml'
 
   
 
