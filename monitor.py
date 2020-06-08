@@ -146,7 +146,7 @@ class AcToMqtt:
 			print ("something went wrong, no devices found")
 			sys.exit();
 			
-		print ("*********** Start copy below ****************")
+		print ("**************** Start copy below ****************")
 		a = []
 		for key in devices_array:
 			##Echo					
@@ -154,7 +154,7 @@ class AcToMqtt:
 			device['platform'] = 'mqtt'			
 			a.append(device)
 		print (yaml.dump({'climate':a}))
-		print ("*********** Stop copy here ****************")
+		print ("**************** Stop copy above ****************")
 		
 	def make_devices_array_from_devices(self,devices):
 		
@@ -267,7 +267,7 @@ class AcToMqtt:
 		
 		
 		##Set last will and testament
-		self._mqtt.will_set(self.config["mqtt_topic_prefix"]+"LWT","offline",True)
+		self._mqtt.will_set("/aircon/LWT","offline",True)
 		
 		##Auth		
 		if self.config["mqtt_user"] and self.config["mqtt_password"]:			
@@ -409,7 +409,7 @@ class AcToMqtt:
 		logger.debug('Mqtt connected! client=%s, userdata=%s, flags=%s, rc=%s' % (client, userdata, flags, rc))
 		# Subscribing in on_connect() means that if we lose the connection and
 		# reconnect then subscriptions will be renewed.
-		sub_topic = self.config["mqtt_topic_prefix"]+"+/+/set"
+		sub_topic = "/aircon/+/+/set"
 		client.subscribe(sub_topic)
 		logger.debug('Listing on %s for messages' % (sub_topic))
 		##LWT
@@ -439,12 +439,12 @@ def discover_and_dump_for_config(config):
 		
 	sys.exit();
 	
-def read_config():
+def read_config(config_file_path):
 	
 	config = {} 
 	##Load config
 	
-	with open(os.path.dirname(os.path.realpath(__file__))+'/config.yml', "r") as ymlfile:
+	with open(config_file_path, "r") as ymlfile:
 		config_file = yaml.load(ymlfile,Loader=yaml.SafeLoader)
 	 
 	##Service settings
@@ -469,9 +469,7 @@ def read_config():
 	if config_file['devices'] != None:
 		config["devices"] = config_file['devices']
 	else:
-		config["devices"] = None
-
-	
+		config["devices"] = None	
 	
 	return config
 				
@@ -546,13 +544,35 @@ def main():
 		parser.add_argument("-s", "--discover", help="Discover devices",action="store_true",default=False)
 		parser.add_argument("-d", "--debug", help="set logging level to debug",action="store_true",default=False)
 		parser.add_argument("-v", "--version", help="Print Verions",action="store_true")
+		parser.add_argument("-dir", "--data_dir", help="Data Folder", default=False)
+		parser.add_argument("-c", "--config", help="Config file path", default=False)
 				
-		
+		##Parse args
 		args = parser.parse_args()
 		
-		# Init logging
+		##Set the base path, if set use it, otherwise default to running folder
+		if args.data_dir:
+			if os.path.exists(args.data_dir):
+				data_dir = args.data_dir
+			else:
+				print ("Path Not found for Datadir: %s" % (args.data_dir))
+				sys.exit()
+		else:
+			data_dir = os.path.dirname(os.path.realpath(__file__))
+			
+		##Config File
+		if args.config:
+			if os.path.exists(args.config):
+				config_file_path = args.config
+			else:
+				print ("Config file not found: %s" % (args.config))
+				sys.exit()
+			 
+		else:
+			config_file_path = data_dir+'/config.yml'
 		
-		logging.basicConfig(filename=os.path.dirname(os.path.realpath(__file__))+'/ac_to_mqtt.log',level=(logging.DEBUG if args.debug else logging.INFO),format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s')
+		# Init logging
+		logging.basicConfig(filename=data_dir+'/ac_to_mqtt.log',level=(logging.DEBUG if args.debug else logging.INFO),format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s')
 		#logging.basicConfig(filename='ac_to_mqtt.log',level=(logging.DEBUG if args.debug else logging.INFO),format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s')
 		
 		logger.debug("%s v%s is starting up" % (__file__, softwareversion))
@@ -561,7 +581,7 @@ def main():
 				
 	 
 		##Apply the config, then if arguments, override the config values with args
-		config = read_config();
+		config = read_config(config_file_path);
 		
 		##Print verions
 		if args.version:
