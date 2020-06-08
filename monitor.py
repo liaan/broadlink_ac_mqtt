@@ -146,7 +146,7 @@ class AcToMqtt:
 			print ("something went wrong, no devices found")
 			sys.exit();
 			
-		print ("*********** start copy below ****************")
+		print ("*********** Start copy below ****************")
 		a = []
 		for key in devices_array:
 			##Echo					
@@ -154,7 +154,7 @@ class AcToMqtt:
 			device['platform'] = 'mqtt'			
 			a.append(device)
 		print (yaml.dump({'climate':a}))
-		print ("**************** Start copy here ****************")
+		print ("*********** Stop copy here ****************")
 		
 	def make_devices_array_from_devices(self,devices):
 		
@@ -267,7 +267,7 @@ class AcToMqtt:
 		
 		
 		##Set last will and testament
-		self._mqtt.will_set("/aircon/LWT","offline",True)
+		self._mqtt.will_set(self.config["mqtt_topic_prefix"]+"LWT","offline",True)
 		
 		##Auth		
 		if self.config["mqtt_user"] and self.config["mqtt_password"]:			
@@ -409,7 +409,7 @@ class AcToMqtt:
 		logger.debug('Mqtt connected! client=%s, userdata=%s, flags=%s, rc=%s' % (client, userdata, flags, rc))
 		# Subscribing in on_connect() means that if we lose the connection and
 		# reconnect then subscriptions will be renewed.
-		sub_topic = "/aircon/+/+/set"
+		sub_topic = self.config["mqtt_topic_prefix"]+"+/+/set"
 		client.subscribe(sub_topic)
 		logger.debug('Listing on %s for messages' % (sub_topic))
 		##LWT
