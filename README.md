@@ -3,13 +3,10 @@
   * Dunham bush --> Tested and working
 
   * Rcool Solo --> Tested and working
-  * Rinnai  --> Not tested
-
   * Akai 9000BTU  --> Tested and working
   * Rinnai  --> Tested and working .. autodiscovery name seems to be buggy
-
   * Kenwood --> In Testing
-  * In theory any Broadlink devtype == 0x4E2a (20010)
+  * In theory any Broadlink devtype == 0x4E2a (20010) using the AC Freedom APP
 
 #### Installation: 
 
