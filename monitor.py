@@ -17,7 +17,7 @@ pid_stale_time = 60
 pid_last_update = 0
 logger = logging.getLogger(__name__)
 debug = False
-softwareversion = "1.0.7"
+softwareversion = "1.0.10"
  
 
 #*****************************************  Main Class ************************************************
