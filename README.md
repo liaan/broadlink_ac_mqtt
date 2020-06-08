@@ -41,12 +41,14 @@ command line arguments:
 ```
 
 optional arguments:
+optional arguments:
   -h, --help            show this help message and exit
-  -d, --debug           set logging level to debug
-  -s, --discover        Discover devices
-  -S, --discoverdump    Discover devices and dump config
   -Hd, --dumphaconfig   Dump the devices as a HA manual config entry
+  -Hat MQTT_AUTO_DISCOVERY_TOPIC, --mqtt_auto_discovery_topic MQTT_AUTO_DISCOVERY_TOPIC
+                        If specified, will Send the MQTT autodiscovery config
+                        for all devices to topic
   -b, --background      Run in background
+  -S, --discoverdump    Discover devices and dump config
   -ms MQTTSERVER, --mqttserver MQTTSERVER
                         Mqtt Server, Default:
   -mp MQTTPORT, --mqttport MQTTPORT
@@ -55,9 +57,14 @@ optional arguments:
                         Mqtt User
   -mP MQTTPASSWORD, --mqttpassword MQTTPASSWORD
                         Mqtt Password
-  -Ma MQTT_AUTO_DISCOVERY_TOPIC, --mqtt_auto_discovery_topic MQTT_AUTO_DISCOVERY_TOPIC
-                        If specified, will Send the MQTT autodiscovery config
-                        for all devices to topic
+  -s, --discover        Discover devices
+  -d, --debug           set logging level to debug
+  -v, --version         Print Verions
+  -dir DATA_DIR, --data_dir DATA_DIR
+                        Data Folder
+  -c CONFIG, --config CONFIG
+                        Config file path
+
   
 
 
