@@ -544,8 +544,8 @@ def main():
 		parser.add_argument("-s", "--discover", help="Discover devices",action="store_true",default=False)
 		parser.add_argument("-d", "--debug", help="set logging level to debug",action="store_true",default=False)
 		parser.add_argument("-v", "--version", help="Print Verions",action="store_true")
-		parser.add_argument("-dir", "--data_dir", help="Data Folder", default=False)
-		parser.add_argument("-c", "--config", help="Config file path", default=False)
+		parser.add_argument("-dir", "--data_dir", help="Data Folder -- Default to folder script is located", default=False)
+		parser.add_argument("-c", "--config", help="Config file path -- Default to folder script is located + 'config.yml'", default=False)
 				
 		##Parse args
 		args = parser.parse_args()
