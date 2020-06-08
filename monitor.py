@@ -546,12 +546,18 @@ def main():
 		parser.add_argument("-s", "--discover", help="Discover devices",action="store_true",default=False)
 		parser.add_argument("-d", "--debug", help="set logging level to debug",action="store_true",default=False)
 		parser.add_argument("-v", "--version", help="Print Verions",action="store_true")
+		parser.add_argument("-dir", "--data-dir", help="Data and Config folder", default=False))
 				
-		
+		##Parse args
 		args = parser.parse_args()
 		
+		##Set the base path, if set use it, otherwise default to running folder
+		if args.data-dir:
+			base_folder = args.data-dir
+		else:
+			base_folder = os.path.realpath(__file__))
+			
 		# Init logging
-		
 		logging.basicConfig(filename=os.path.dirname(os.path.realpath(__file__))+'/ac_to_mqtt.log',level=(logging.DEBUG if args.debug else logging.INFO),format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s')
 		#logging.basicConfig(filename='ac_to_mqtt.log',level=(logging.DEBUG if args.debug else logging.INFO),format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s')
 		
