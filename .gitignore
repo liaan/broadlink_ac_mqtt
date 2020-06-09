@@ -4,3 +4,4 @@
 *.log
 config.yml
 
+.vscode/*

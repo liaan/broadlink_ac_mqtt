@@ -270,12 +270,12 @@ class ac_db(device):
 				AUTO = 0b00000111
 				
 			class HORIZONTAL:		##Don't think this really works for all devices.
-				LEFT_FIX = 2;
-				LEFT_FLAP = 1;
-				LEFT_RIGHT_FIX = 7;
-				LEFT_RIGHT_FLAP = 0;
-				RIGHT_FIX = 6;
-				RIGHT_FLAP = 5;
+				LEFT_FIX = 2
+				LEFT_FLAP = 1
+				LEFT_RIGHT_FIX = 7
+				LEFT_RIGHT_FLAP = 0
+				RIGHT_FIX = 6
+				RIGHT_FLAP = 5
 				ON = 0
 				OFF = 1
 			
@@ -317,19 +317,18 @@ class ac_db(device):
 		
 		
 		self.logging.basicConfig(level=(self.logging.DEBUG if debug else self.logging.INFO))
-		self.logger.debug("Debugging Enabled");		
-		
+		self.logger.debug("Debugging Enabled")	
 		
 		
 		##Populate array with latest data
 		self.logger.debug("Authenticating")
 		if self.auth() == False:
-			return False;
+			return 
 		
 		self.logger.debug("Getting current details in init")		
 		
 		##Get the current details
-		self.get_ac_status(force_update = True);
+		self.get_ac_status(force_update = True)
 
 	def get_ac_status(self,force_update = False):
 		
@@ -364,7 +363,7 @@ class ac_db(device):
 		self.status['lastupdate'] = None
 		self.status['ambient_temp'] = None
 		self.status['devicename'] = None
-		debug  = 0;
+		
 		
 		
 	def set_temperature(self,temperature):

@@ -26,7 +26,7 @@ class AcToMqtt:
 	 
 	device_objects = {}
 	previous_status = {}
-	last_update = {};
+	last_update = {}
 	
 	def __init__(self,config):
 		self.config = config
@@ -62,9 +62,7 @@ class AcToMqtt:
 		#logger.debug( "Device type detected: " +self.device.type)
 		#logger.debug( "Starting device test()")			
 		
-	
-	def print_yaml_discovered_devices(self):	
-		print (yaml.dump(self.discover_devices));
+
 		
 	def make_device_objects(self,device_list = None):
 		device_objects = {}
@@ -117,9 +115,9 @@ class AcToMqtt:
 					#print status
 					if status:
 						##Update last time checked
-						self.last_update[key] = time.time();
+						self.last_update[key] = time.time()
 						
-						self.publish_mqtt_info(status);
+						self.publish_mqtt_info(status)
 						
 					else:
 						logger.debug("No status")
@@ -128,7 +126,7 @@ class AcToMqtt:
 			except Exception as e:					
 				logger.critical(e)	
 				##Something went wrong, so just exit and let system restart	
-				continue;
+				continue
 			
 			##Exit if not daemon_mode
 			if self.config["daemon_mode"] != True:
@@ -144,7 +142,7 @@ class AcToMqtt:
 		devices_array = self.make_devices_array_from_devices(devices)
 		if devices_array ==  {}:
 			print ("something went wrong, no devices found")
-			sys.exit();
+			sys.exit()
 			
 		print ("**************** Start copy below ****************")
 		a = []
@@ -161,7 +159,7 @@ class AcToMqtt:
 		devices_array = {}
 		
 		for device in devices.values():
-			topic = self.config["mqtt_auto_discovery_topic"]+"/climate/"+device.status["macaddress"]+"/config"
+			##topic = self.config["mqtt_auto_discovery_topic"]+"/climate/"+device.status["macaddress"]+"/config"
 			if not device.name :
 				name = device.status["macaddress"]
 			else:
@@ -194,14 +192,14 @@ class AcToMqtt:
 	def publish_mqtt_auto_discovery(self,devices):
 		if 	devices == [] or devices == None:
 			print ("No devices defined")
-			logger.error("No Devices defined, either enable discovery or add them to config");
+			logger.error("No Devices defined, either enable discovery or add them to config")
 			sys.exit()
 		
 		##Make an array
 		devices_array = self.make_devices_array_from_devices(devices)
 		if devices_array == {}:
 			print ("something went wrong, no devices found")
-			sys.exit();		
+			sys.exit()	
 		
 		for key in devices_array:
 			device = devices_array[key]			
@@ -237,7 +235,7 @@ class AcToMqtt:
 			if pubResult != None:					
 				logger.warning('Publishing Result: "%s"' % mqtt.error_string(pubResult))
 				if pubResult == mqtt.MQTT_ERR_NO_CONN:
-					self._connect_mqtt();
+					self._connect_mqtt()
 					
 				break
 			
@@ -418,8 +416,8 @@ class AcToMqtt:
 #*****************************************  Get going methods ************************************************
 
 def discover_and_dump_for_config(config):
-	actomqtt = AcToMqtt(config);
-	devices = actomqtt.discover();
+	actomqtt = AcToMqtt(config)
+	devices = actomqtt.discover()
 	yaml_devices = []
 	if devices == {}:
 		print ("No devices found, make sure you are on same network broadcast segment as device/s")
@@ -437,7 +435,7 @@ def discover_and_dump_for_config(config):
 	print (yaml.dump({'devices':yaml_devices}))
 	print ("*********** stop copy above ************")
 		
-	sys.exit();
+	sys.exit()
 	
 def read_config(config_file_path):
 	
@@ -507,7 +505,7 @@ def stop_if_already_running():
 				sys.exit()
 	 
 	##Write current time
-	touch_pid_file();
+	touch_pid_file()
 	
 	
 #################  Main startup ####################
@@ -516,7 +514,7 @@ def main():
 		
 		##Just some defaults
 		##Defaults		
-		daemon_mode = False;		
+		
 		devices = {}			 
 		
 				
@@ -581,12 +579,12 @@ def main():
 				
 	 
 		##Apply the config, then if arguments, override the config values with args
-		config = read_config(config_file_path);
+		config = read_config(config_file_path)
 		
 		##Print verions
 		if args.version:
 			print ("Monitor Version: %s, Class version:%s" % (softwareversion,broadlink.version))
-			sys.exit();
+			sys.exit()
 		
 		##Mqtt Host
 		if args.mqttserver:
@@ -629,7 +627,7 @@ def main():
 		
 		try:
 			##class
-			actomqtt = AcToMqtt(config);
+			actomqtt = AcToMqtt(config)
 		
 			##Connect to Mqtt
 			actomqtt._connect_mqtt()	
@@ -642,7 +640,7 @@ def main():
 			
 			if args.dumphaconfig:
 				actomqtt.dump_homeassistant_config_from_devices(devices)			
-				sys.exit();
+				sys.exit()
 				
  			##Publish mqtt auto discovery if topic  set
 			if config["mqtt_auto_discovery_topic"]:
@@ -650,7 +648,7 @@ def main():
 		
 			
 			##Run main loop
-			actomqtt.do_loop(config,devices);
+			actomqtt.do_loop(config,devices)
 			
 		except KeyboardInterrupt:
 			logging.debug("User Keyboard interuped")
