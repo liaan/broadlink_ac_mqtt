@@ -1,4 +1,4 @@
-# Broadlink Air Conditioners to mqtt .... very much still in dev(getting better)
+# Broadlink Air Conditioners to mqtt  
 #### Air Conditioners compatibility 
   * Dunham bush --> Tested and working
 
