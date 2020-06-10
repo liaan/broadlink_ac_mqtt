@@ -4,24 +4,22 @@ import yaml
 import logging
 import os
 import tempfile
-import broadlink_ac_mqtt.main as AcToMqtt
-
-
+import argparse
+import time
+import broadlink_ac_mqtt.AcToMqtt as AcToMqtt
 
 logger = logging.getLogger(__name__)
 softwareversion = "1.0.10"
 
 
-pid = str(os.getpid())
-pidfile = tempfile.gettempdir() + "/ac_to_mqtt.pid"
-pid_stale_time = 60
-pid_last_update = 0
+
 
 #*****************************************  Get going methods ************************************************
 
+
 def discover_and_dump_for_config(config):
-	actomqtt = AcToMqtt(config)
-	devices = actomqtt.discover()
+	Ac = AcToMqtt.AcToMqtt(config)
+	devices = Ac.discover()
 	yaml_devices = []
 	if devices == {}:
 		print ("No devices found, make sure you are on same network broadcast segment as device/s")
@@ -75,46 +73,16 @@ def read_config(config_file_path):
 	
 	return config
 				
-def touch_pid_file():
-	global pid_last_update
-	
-	##No need to update very often
-	if(pid_last_update + pid_stale_time -2 > time.time()):	
-		return
-	
-	pid_last_update = time.time() 
-	with open(pidfile, 'w') as f:
-		f.write("%s,%s" % (os. getpid() ,pid_last_update))	
-	
-		
-def stop_if_already_running():
-	
-	
-	##Check if there is pid, if there is, then check if valid or stale .. probably should add process id for race conditions but damn, this is a simple scripte.....
-	if os.path.isfile(pidfile):
 
-		logger.debug("%s already exists, checking if stale" % pidfile)
-		##Check if stale
-		f = open(pidfile, 'r') 
-		if f.mode =="r":
-			contents =f.read()
-			contents = contents.split(',')
-			
-			##Stale, so go ahead
-			if (float(contents[1])+ pid_stale_time) < time.time():
-				logger.info("Pid is stale, so we'll just overwrite it go on")								
-				
-			else:
-				logger.debug("Pid is still valid, so exit")												
-				sys.exit()
-	 
-	##Write current time
-	touch_pid_file()
+def stop_if_already_running(AcToMqtt):
 	
-	
+	if(AcToMqtt.check_if_running()):		
+		sys.exit()
+
+ 
 #################  Main startup ####################
 				
-def main():
+def start():
 		
 		##Just some defaults
 		##Defaults		
@@ -148,6 +116,7 @@ def main():
 		parser.add_argument("-v", "--version", help="Print Verions",action="store_true")
 		parser.add_argument("-dir", "--data_dir", help="Data Folder -- Default to folder script is located", default=False)
 		parser.add_argument("-c", "--config", help="Config file path -- Default to folder script is located + 'config.yml'", default=False)
+		parser.add_argument("-l", "--logfile", help="Logfile path -- Default to logs folder script is located", default=False)
 				
 		##Parse args
 		args = parser.parse_args()
@@ -172,9 +141,16 @@ def main():
 			 
 		else:
 			config_file_path = data_dir+'/config.yml'
+			
 		
+		##Config File
+		if args.logfile:			
+			log_file_path = args.config			 
+		else:
+			log_file_path = os.path.dirname(os.path.realpath(__file__))+'/log/broadlink_ac_mqtt.log'
+			
 		# Init logging
-		logging.basicConfig(filename=data_dir+'/ac_to_mqtt.log',level=(logging.DEBUG if args.debug else logging.INFO),format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s')
+		logging.basicConfig(filename=log_file_path,level=(logging.DEBUG if args.debug else logging.INFO),format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s')
 		#logging.basicConfig(filename='ac_to_mqtt.log',level=(logging.DEBUG if args.debug else logging.INFO),format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s')
 		
 		logger.debug("%s v%s is starting up" % (__file__, softwareversion))
@@ -222,45 +198,54 @@ def main():
 			config["daemon_mode"] = True
 			 
 		
-		##Make sure not already running		
-		stop_if_already_running()		
-		
-		logging.info("Starting Monitor...")
-        # Start and run the mainloop
-		logger.debug("Starting mainloop, responding on only events")
+		##mmmm.. this looks dodgy.. but i'm not python expert 			
+		Ac = AcToMqtt.AcToMqtt(config)
+
 		
 		try:
-			##class
-			actomqtt = AcToMqtt(config)
+			
+			
+			##Make sure not already running		
+			stop_if_already_running(Ac)		
+			
+			logging.info("Starting Monitor...")
+			# Start and run the mainloop
+			logger.debug("Starting mainloop, responding on only events")
 		
 			##Connect to Mqtt
-			actomqtt._connect_mqtt()	
-
+			Ac.connect_mqtt()	
+			
 			
 			if config["self_discovery"]:	
-				devices = actomqtt.discover()
+				devices = Ac.discover()
 			else:
-				devices = actomqtt.make_device_objects(config['devices'])
+				devices = Ac.make_device_objects(config['devices'])
 			
 			if args.dumphaconfig:
-				actomqtt.dump_homeassistant_config_from_devices(devices)			
+				Ac.dump_homeassistant_config_from_devices(devices)			
 				sys.exit()
 				
  			##Publish mqtt auto discovery if topic  set
 			if config["mqtt_auto_discovery_topic"]:
-				actomqtt.publish_mqtt_auto_discovery(devices)			
+				Ac.publish_mqtt_auto_discovery(devices)			
 		
 			
 			##Run main loop
-			actomqtt.do_loop(config,devices)
+			Ac.start(config,devices)
 			
 		except KeyboardInterrupt:
 			logging.debug("User Keyboard interuped")
+		except Exception as e:					
+			print (e)
+			sys.exit()
 		finally:
-			os.unlink(pidfile)
+			##cleanup			
+			Ac.stop()
 			logging.info("Stopping Monitor...")
 
 				
 if __name__ == "__main__":
 	
-	main()
+	start()
+else:
+	print "dunno"

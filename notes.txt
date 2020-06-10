@@ -1,9 +1,0 @@
-```
-# static fields
-.field public static final GET_AC_INFO:Ljava/lang/String; = "BB0006800000020021011B7E"
-
-.field public static final GET_SLEEP_INFO:Ljava/lang/String; = "BB000680000002004101FB7D"
-
-.field public static final GET_STATES:Ljava/lang/String; = "BB0006800000020011012B7E"
-
-````
