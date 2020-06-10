@@ -8,8 +8,8 @@ import yaml
 import paho.mqtt.client as mqtt
 import tempfile
 import json
-sys.path.insert(1, os.path.join(os.path.dirname(__file__), './ext/broadlink'))
-import ac_db as broadlink
+#sys.path.insert(1, os.path.join(os.path.dirname(__file__), './ext/broadlink'))
+import classes.broadlink.ac_db as broadlink
 
 pid = str(os.getpid())
 pidfile = tempfile.gettempdir() + "/ac_to_mqtt.pid"
@@ -74,8 +74,7 @@ class AcToMqtt:
 			
 		for device in device_list:			
 			device_objects[device['mac']] = broadlink.gendevice(devtype=0x4E2a, host=(device['ip'],device['port']),mac = bytearray.fromhex(device['mac']), name=device['name'],update_interval = self.config['update_interval'])		
-			
-		
+					
 		return device_objects
 	
 	
