@@ -15,6 +15,7 @@ uses Pahoo MQTT so run :
 ```
 pip install paho-mqtt
 pip install pyyaml
+pip install PyCrypto
 ```
 1. copy sample_config.ym_ to config.yml
 2. Edit config to match your enviroment
