@@ -8,6 +8,7 @@ import argparse
 import time
 import broadlink_ac_mqtt.AcToMqtt as AcToMqtt
 
+
 logger = logging.getLogger(__name__)
 softwareversion = "1.0.10"
 
@@ -163,7 +164,7 @@ def start():
 		
 		##Print verions
 		if args.version:
-			print ("Monitor Version: %s, Class version:%s" % (softwareversion,broadlink.version))
+			print ("Monitor Version: %s, Class version:%s" % (softwareversion,broadlink_ac_mqtt.classes.broadlink.version))
 			sys.exit()
 		
 		##Mqtt Host
