@@ -33,8 +33,7 @@ class AcToMqtt:
 		self.config = config
 		"" 
 			
-	def init(config):
-		self.config = config
+	
 	def discover(self):		 
 		##Go discovery
 		discovered_devices = broadlink.discover(timeout=5)			
