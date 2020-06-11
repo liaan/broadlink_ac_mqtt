@@ -242,7 +242,7 @@ def start():
 		finally:
 			##cleanup			
 			Ac.stop()
-			logging.info("Stopping Monitor...")
+			logging.debug("Stopping Monitor...")
 
 				
 if __name__ == "__main__":	
