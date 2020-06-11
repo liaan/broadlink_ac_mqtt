@@ -68,7 +68,6 @@ optional arguments:
 
   
 
-
 example: Run in background
 ./monitor.py -b
 run with full debugging (logs to ac_to_mqtt.log in folder where monitor.py is located)
