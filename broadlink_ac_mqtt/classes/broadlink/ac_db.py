@@ -304,7 +304,8 @@ class ac_db(device):
 		
 		devtype = devtype
 		self.status = {}		
-		self.logger = self.logging.getLogger(__name__)		
+		self.logger = self.logging.getLogger(__name__)	
+		 
 		self.update_interval = update_interval
 		
 		##Set default values
