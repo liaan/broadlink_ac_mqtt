@@ -9,14 +9,12 @@ import time
 import broadlink_ac_mqtt.AcToMqtt as AcToMqtt
 import broadlink_ac_mqtt.classes.broadlink.ac_db as ac_db_version
 
+
 logger = logging.getLogger(__name__)
+
 softwareversion = "1.0.11"
 
-
-
-
 #*****************************************  Get going methods ************************************************
-
 
 def discover_and_dump_for_config(config):
 	Ac = AcToMqtt.AcToMqtt(config)
@@ -80,7 +78,27 @@ def stop_if_already_running(AcToMqtt):
 	if(AcToMqtt.check_if_running()):		
 		sys.exit()
 
- 
+def init_logging(level,log_file_path):
+		
+		# Init logging
+		logging.basicConfig(
+			filename=log_file_path,
+    		level=level,
+    		format="%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s",
+		 
+		)
+		
+		console = logging.StreamHandler()
+		console.setLevel(logging.INFO)
+		# set a format which is simpler for console use
+		formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
+		
+		# tell the handler to use this format
+		console.setFormatter(formatter)
+		logging.getLogger('').addHandler(console)
+
+		
+
 #################  Main startup ####################
 				
 def start():
@@ -141,18 +159,20 @@ def start():
 				sys.exit()
 			 
 		else:
-			config_file_path = data_dir+'/config.yml'
+			if os.path.exists(data_dir+'/settings/config.yml'):
+				config_file_path = data_dir+'/settings/config.yml'
+			else:
+				config_file_path = data_dir+'/config.yml'
 			
 		
 		##Config File
 		if args.logfile:			
 			log_file_path = args.config			 
-		else:
-			log_file_path = os.path.dirname(os.path.realpath(__file__))+'/log/broadlink_ac_mqtt.log'
+		else:			
+			log_file_path = os.path.dirname(os.path.realpath(__file__))+'/log/out.log'
 			
-		# Init logging
-		logging.basicConfig(filename=log_file_path,level=(logging.DEBUG if args.debug else logging.INFO),format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s')
-		#logging.basicConfig(filename='ac_to_mqtt.log',level=(logging.DEBUG if args.debug else logging.INFO),format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s')
+		log_level = logging.DEBUG if args.debug else logging.INFO
+		init_logging(log_level,log_file_path)
 		
 		logger.debug("%s v%s is starting up" % (__file__, softwareversion))
 		logLevel = {0: 'NOTSET', 10: 'DEBUG', 20: 'INFO', 30: 'WARNING', 40: 'ERROR'}
