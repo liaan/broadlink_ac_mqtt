@@ -346,7 +346,7 @@ def start():
 				AC.start(config,devices)
 				touch_pid_file()
 			
-			running = false
+			running = False
 		except KeyboardInterrupt:
 			logging.debug("User Keyboard interuped")
 		except Exception as e:					
