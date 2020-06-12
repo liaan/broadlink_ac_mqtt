@@ -8,18 +8,13 @@ import yaml
 import paho.mqtt.client as mqtt
 import tempfile
 import json
-import classes.broadlink.ac_db as broadlink
+from  classes.broadlink import ac_db as broadlink
 
 
 logger = logging.getLogger(__name__)
 
-debug = False
-
- 
 config  = {}	
 device_objects = {}
-
-
 
 pid = str(os.getpid())
 pidfile = tempfile.gettempdir() + "/ac_to_mqtt.pid"
