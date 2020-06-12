@@ -18,14 +18,13 @@ logger = logging.getLogger(__name__)
 config  = {}	
 device_objects = {}
 
-pid = str(os.getpid())
-pidfile = tempfile.gettempdir() + "/ac_to_mqtt.pid"
-pid_stale_time = 60
-pid_last_update = 0
+
+
+
 
 class AcToMqtt:
 	previous_status = {}
-	last_update = {}	
+	last_update = {}
 	
 	def __init__(self,config):
 		self.config = config
@@ -51,39 +50,8 @@ class AcToMqtt:
 		
 		return devices
 		
-	def check_if_running(self):
-		##Check if there is pid, if there is, then check if valid or stale .. probably should add process id for race conditions but damn, this is a simple scripte.....
-		if os.path.isfile(pidfile):
 
-			logger.debug("%s already exists, checking if stale" % pidfile)
-			##Check if stale
-			f = open(pidfile, 'r') 
-			if f.mode =="r":
-				contents =f.read()
-				contents = contents.split(',')
-				
-				##Stale, so go ahead
-				if (float(contents[1])+ pid_stale_time) < time.time():
-					logger.info("Pid is stale, so we'll just overwrite it go on")								
-					
-				else:
-					logger.debug("Pid is still valid, so exit")												
-					sys.exit()
-	 
-		##Write current time
-		self.touch_pid_file()
-		
-	def touch_pid_file(self):
-		global pid_last_update
-		
-		##No need to update very often
-		if(pid_last_update + pid_stale_time -2 > time.time()):	
-			return
-		
-		pid_last_update = time.time() 
-		with open(pidfile, 'w') as f:
-			f.write("%s,%s" % (os. getpid() ,pid_last_update))	
-			
+	
 	def make_device_objects(self,device_list = None):
 		device_objects = {}
 		if  device_list == [] or device_list == None:
@@ -102,9 +70,7 @@ class AcToMqtt:
 			self._mqtt.disconnect()
 		except:
 			""
-		##clean pid file
-		os.unlink(pidfile)
-		
+				
 	def start (self,config, devices = None):
 			
 		self.device_objects = devices		
@@ -114,48 +80,41 @@ class AcToMqtt:
 		if 	devices == [] or devices == None:
 			print ("No devices defined")
 			logger.error("No Devices defined, either enable discovery or add them to config")
-			sys.exit()
+			return
 		
-		while True:
-			##we are alive ##Update PID file
-			self.touch_pid_file()	
+		##we are alive ##Update PID file			
+		try:
 			
-			try:
-				
-				for key in devices:
-					device = devices[key]
-					##Just check status on every update interval
-					if key in self.last_update:
-						if (self.last_update[key] + self.config["update_interval"]) > time.time():
-							logger.debug("Timeout %s not done, so lets wait a abit : %s : %s" %(self.config["update_interval"],self.last_update[key] + self.config["update_interval"],time.time()))				
-							time.sleep(0.5)
-							continue
-						else:
-							""
-							#print "timeout done"					
-				
-					##Get the status, the global update interval is used as well to reduce requests to aircons as they slow
-					status = device.get_ac_status()						
-					#print status
-					if status:
-						##Update last time checked
-						self.last_update[key] = time.time()						
-						self.publish_mqtt_info(status)		
-
+			for key in devices:
+				device = devices[key]
+				##Just check status on every update interval
+				if key in self.last_update:
+					if (self.last_update[key] + self.config["update_interval"]) > time.time():
+						logger.debug("Timeout %s not done, so lets wait a abit : %s : %s" %(self.config["update_interval"],self.last_update[key] + self.config["update_interval"],time.time()))				
+						time.sleep(0.5)
+						continue
 					else:
-						logger.debug("No status")
-				
-				
-			except Exception as e:	
-				
-				logger.critical(e)	
-				##Something went wrong, so just exit and let system restart	
-				continue
+						""
+						#print "timeout done"					
 			
-			##Exit if not daemon_mode
-			if self.config["daemon_mode"] != True:
-				break
-			##Set last update 
+				##Get the status, the global update interval is used as well to reduce requests to aircons as they slow
+				status = device.get_ac_status()						
+				#print status
+				if status:
+					##Update last time checked
+					self.last_update[key] = time.time()						
+					self.publish_mqtt_info(status)		
+
+				else:
+					logger.debug("No status")				
+				
+		except Exception as e:					
+			logger.critical(e)	
+			##Something went wrong, so just exit and let system restart	
+			
+
+		return 1
+			
 				
 	def dump_homeassistant_config_from_devices(self,devices):	
 		

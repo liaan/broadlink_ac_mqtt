@@ -10,16 +10,27 @@ import broadlink_ac_mqtt.AcToMqtt as AcToMqtt
 import broadlink_ac_mqtt.classes.broadlink.ac_db as ac_db_version
 import signal
 
-
 logger = logging.getLogger(__name__)
-
+AC = None
 softwareversion = "1.0.12"
+
+
+pid = str(os.getpid())
+pidfile = tempfile.gettempdir() + "/ac_to_mqtt.pid"
+pid_stale_time = 5
+pid_last_update = 0
+
+
+do_loop = False
+running = False
+softwareversion = "1.0.13"
+
 
 #*****************************************  Get going methods ************************************************
 
 def discover_and_dump_for_config(config):
-	Ac = AcToMqtt.AcToMqtt(config)
-	devices = Ac.discover()
+	AC = AcToMqtt.AcToMqtt(config)
+	devices = AC.discover()
 	yaml_devices = []
 	if devices == {}:
 		print ("No devices found, make sure you are on same network broadcast segment as device/s")
@@ -38,6 +49,9 @@ def discover_and_dump_for_config(config):
 	print ("*********** stop copy above ************")
 		
 	sys.exit()
+
+
+
 	
 def read_config(config_file_path):
 	
@@ -57,9 +71,11 @@ def read_config(config_file_path):
 	config["mqtt_port"] = config_file["mqtt"]["port"]
 	config["mqtt_user"]= config_file["mqtt"]["user"]
 	config["mqtt_password"] = config_file["mqtt"]["passwd"]
-	config["mqtt_client_id"] = config_file["mqtt"]["client_id"]	
+	##set client id if set, otherwise just add timestamp to generic to prevent conflicts
+	config["mqtt_client_id"] = config_file["mqtt"]["client_id"] if config_file["mqtt"]["client_id"] else 'broadlink_to_mqtt-'+str(time.time())
 	config["mqtt_topic_prefix"] = config_file["mqtt"]["topic_prefix"]
 	config["mqtt_auto_discovery_topic"] = config_file["mqtt"]["auto_discovery_topic"]
+	
 	
 	if config["mqtt_topic_prefix"] and config["mqtt_topic_prefix"].endswith("/") == False:
 		config["mqtt_topic_prefix"] = config["mqtt_topic_prefix"] + "/"
@@ -74,9 +90,8 @@ def read_config(config_file_path):
 	return config
 				
 
-def stop_if_already_running(AcToMqtt):
-	
-	if(AcToMqtt.check_if_running()):		
+def stop_if_already_running():	
+	if(check_if_running()):		
 		sys.exit()
 
 def init_logging(level,log_file_path):
@@ -92,21 +107,99 @@ def init_logging(level,log_file_path):
 		console = logging.StreamHandler()
 		console.setLevel(logging.INFO)
 		# set a format which is simpler for console use
-		formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
+		formatter = logging.Formatter('%(message)s')
 		
 		# tell the handler to use this format
 		console.setFormatter(formatter)
 		logging.getLogger('').addHandler(console)
 
+def touch_pid_file():
+		global pid_last_update
 		
+		##No need to update very often
+		if(pid_last_update + pid_stale_time -2 > time.time()):	
+			return
+		
+		pid_last_update = time.time() 
+		with open(pidfile, 'w') as f:
+			f.write("%s,%s" % (os. getpid() ,pid_last_update))	
+
+def check_if_running():
+	##Check if there is pid, if there is, then check if valid or stale .. probably should add process id for race conditions but damn, this is a simple scripte.....
+	if os.path.isfile(pidfile):
+
+		logger.debug("%s already exists, checking if stale" % pidfile)
+		##Check if stale
+		f = open(pidfile, 'r') 
+		if f.mode =="r":
+			contents =f.read()
+			contents = contents.split(',')
+			
+			##Stale, so go ahead
+			if (float(contents[1])+ pid_stale_time) < time.time():
+				logger.info("Pid is stale, so we'll just overwrite it go on")								
+				
+			else:
+				logger.debug("Pid is still valid, so exit")												
+				sys.exit()
+	
+	##Write current time
+	touch_pid_file()
+				
+
+################ Signal handlers
+def receiveSignal(signalNumber, frame):
+	#print('Received:', signalNumber)
+	stop(signalNumber, frame)
+	return
+
+def stop(signalNumber = 0, frame = 0):
+	logger.info("Stopping")
+	do_loop = False
+	while running:
+		logger.info("Waiting to stop")
+		sleep(1)
+
+
+	if AC is not None:
+		AC.stop()
+	##clean pid file
+	if os.path.isfile(pidfile):
+		os.unlink(pidfile)
+	sys.exit()
+	
+
+def restart(signalNumber = 0, frame = 0):
+	""
+
+def init_signal():
+	signal.signal(signal.SIGHUP, restart)
+	signal.signal(signal.SIGINT, receiveSignal)
+	signal.signal(signal.SIGQUIT, receiveSignal)
+	signal.signal(signal.SIGILL, receiveSignal)
+	signal.signal(signal.SIGTRAP, receiveSignal)
+	signal.signal(signal.SIGABRT, receiveSignal)
+	signal.signal(signal.SIGBUS, receiveSignal)
+	signal.signal(signal.SIGFPE, receiveSignal)
+	#signal.signal(signal.SIGKILL, receiveSignal)
+	signal.signal(signal.SIGUSR1, receiveSignal)
+	signal.signal(signal.SIGSEGV, receiveSignal)
+	signal.signal(signal.SIGUSR2, receiveSignal)
+	signal.signal(signal.SIGPIPE, receiveSignal)
+	signal.signal(signal.SIGALRM, receiveSignal)
+	signal.signal(signal.SIGTERM, stop)
+
 
 #################  Main startup ####################
 				
 def start():
-		
+		##Handle signal
+		init_signal()
+		##Make sure not already running		
+		stop_if_already_running()		
 		##Just some defaults
 		##Defaults		
-		
+		global AC	
 		devices = {}			 
 		
 				
@@ -217,53 +310,51 @@ def start():
 			
 		##Deamon Mode
 		if args.background:
-			config["daemon_mode"] = True
-			 
+			config["daemon_mode"] = True			 
 		
 		##mmmm.. this looks dodgy.. but i'm not python expert 			
-		Ac = AcToMqtt.AcToMqtt(config)
-
+		AC = AcToMqtt.AcToMqtt(config)
 		
-		try:
-			
-			
-			##Make sure not already running		
-			stop_if_already_running(Ac)		
+		try:				
 			
 			logging.info("Starting Monitor...")
 			# Start and run the mainloop
 			logger.debug("Starting mainloop, responding on only events")
 		
 			##Connect to Mqtt
-			Ac.connect_mqtt()	
-			
+			AC.connect_mqtt()				
 			
 			if config["self_discovery"]:	
-				devices = Ac.discover()
+				devices = AC.discover()
 			else:
-				devices = Ac.make_device_objects(config['devices'])
+				devices = AC.make_device_objects(config['devices'])
 			
 			if args.dumphaconfig:
-				Ac.dump_homeassistant_config_from_devices(devices)			
+				AC.dump_homeassistant_config_from_devices(devices)			
 				sys.exit()
 				
  			##Publish mqtt auto discovery if topic  set
 			if config["mqtt_auto_discovery_topic"]:
-				Ac.publish_mqtt_auto_discovery(devices)			
+				AC.publish_mqtt_auto_discovery(devices)			
 		
-			
+			##One loop
+			do_loop = True if config["daemon_mode"] else False			
+					
 			##Run main loop
-			Ac.start(config,devices)
+			while do_loop :
+				running = True
+				AC.start(config,devices)
+				touch_pid_file()
 			
+			running = false
 		except KeyboardInterrupt:
 			logging.debug("User Keyboard interuped")
 		except Exception as e:					
-			print (e)
-			sys.exit()
+			print (e)			
 		finally:
-			##cleanup			
-			Ac.stop()
-			logging.debug("Stopping Monitor...")
+			##cleanup
+			stop()
+			
 
 				
 if __name__ == "__main__":	
