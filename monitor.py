@@ -158,7 +158,7 @@ def stop(signalNumber = 0, frame = 0):
 	do_loop = False
 	while running:
 		logger.info("Waiting to stop")
-		sleep(1)
+		time.sleep(1)
 
 
 	if AC is not None:
