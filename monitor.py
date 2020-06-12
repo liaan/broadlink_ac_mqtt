@@ -8,6 +8,7 @@ import argparse
 import time
 import broadlink_ac_mqtt.AcToMqtt as AcToMqtt
 import broadlink_ac_mqtt.classes.broadlink.ac_db as ac_db_version
+import signal
 
 
 logger = logging.getLogger(__name__)
