@@ -20,8 +20,11 @@ pidfile = tempfile.gettempdir() + "/ac_to_mqtt.pid"
 pid_stale_time = 5
 pid_last_update = 0
 
+
 do_loop = False
 running = False
+softwareversion = "1.0.13"
+
 
 #*****************************************  Get going methods ************************************************
 
