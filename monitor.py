@@ -13,7 +13,7 @@ import signal
 
 logger = logging.getLogger(__name__)
 
-softwareversion = "1.0.11"
+softwareversion = "1.0.12"
 
 #*****************************************  Get going methods ************************************************
 
