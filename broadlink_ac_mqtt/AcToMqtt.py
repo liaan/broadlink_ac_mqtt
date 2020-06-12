@@ -8,7 +8,9 @@ import yaml
 import paho.mqtt.client as mqtt
 import tempfile
 import json
-from  classes.broadlink import ac_db as broadlink
+
+sys.path.insert(1, os.path.join(os.path.dirname(os.path.realpath(__file__)),'classes','broadlink'))
+import ac_db as broadlink
 
 
 logger = logging.getLogger(__name__)
@@ -45,18 +47,9 @@ class AcToMqtt:
 		##Make sure correct device id 
 		for device in discovered_devices:		  			
 			if device.devtype == 0x4E2a:
-				devices[device.status['macaddress']] = device
-				
+				devices[device.status['macaddress']] = device				
 		
 		return devices
-			
-		
-				
-		#device = self.devices["a"]
-		#self.device = broadlink.ac_db(host=device.host, mac=device.mac,debug=False)				
-		#logger.debug(self.device.host)
-		#logger.debug( "Device type detected: " +self.device.type)
-		#logger.debug( "Starting device test()")			
 		
 	def check_if_running(self):
 		##Check if there is pid, if there is, then check if valid or stale .. probably should add process id for race conditions but damn, this is a simple scripte.....
@@ -95,8 +88,7 @@ class AcToMqtt:
 		device_objects = {}
 		if  device_list == [] or device_list == None:
 			error_msg = " Cannot make device objects, empty list given"
-			logger.error(error_msg)
-			print (error_msg)
+			logger.error(error_msg)			
 			sys.exit()
 			
 		for device in device_list:			
@@ -107,7 +99,7 @@ class AcToMqtt:
 	def stop(self):
 		
 		try:
-			self._mqtt.disconnect();
+			self._mqtt.disconnect()
 		except:
 			""
 		##clean pid file
@@ -140,24 +132,22 @@ class AcToMqtt:
 							continue
 						else:
 							""
-							#print "timeout done"
-					
-					
+							#print "timeout done"					
 				
 					##Get the status, the global update interval is used as well to reduce requests to aircons as they slow
 					status = device.get_ac_status()						
 					#print status
 					if status:
 						##Update last time checked
-						self.last_update[key] = time.time()
-						
-						self.publish_mqtt_info(status)
-						
+						self.last_update[key] = time.time()						
+						self.publish_mqtt_info(status)		
+
 					else:
 						logger.debug("No status")
 				
 				
-			except Exception as e:					
+			except Exception as e:	
+				
 				logger.critical(e)	
 				##Something went wrong, so just exit and let system restart	
 				continue
@@ -194,14 +184,14 @@ class AcToMqtt:
 		
 		for device in devices.values():
 			##topic = self.config["mqtt_auto_discovery_topic"]+"/climate/"+device.status["macaddress"]+"/config"
+			name = ""	
 			if not device.name :
 				name = device.status["macaddress"]
 			else:
-				name = device.name.encode('ascii','ignore') 
-				
+				name = device.name.encode('ascii','ignore')
 				
 			device_array = { 
-				"name": name
+				"name": name.decode("utf-8")
 				#,"power_command_topic" : self.config["mqtt_topic_prefix"]+  device.status["macaddress"]+"/power/set"
 				,"mode_command_topic" : self.config["mqtt_topic_prefix"]+  device.status["macaddress"]+"/mode_homeassistant/set"
 				,"temperature_command_topic" : self.config["mqtt_topic_prefix"]  + device.status["macaddress"]+"/temp/set"
@@ -238,33 +228,33 @@ class AcToMqtt:
 		for key in devices_array:
 			device = devices_array[key]			
 			topic = self.config["mqtt_auto_discovery_topic"]+"/climate/"+key+"/config"
-			##Publish
-			self._publish(topic,json.dumps(device))
-			
-			
-		#sys.exit();	
-		
-		
+			##Publish						
+			self._publish(topic,json.dumps(device))			
 				
-	def publish_mqtt_info(self,status):
-		
+	def publish_mqtt_info(self,status):	
+		 
 		##Publish all values in status
 		for key in status:
-			value = status[key]			
+			##Make sure its a string
+			value = status[key]
+			
+			
+		 
 			##check if device already in previous_status
 			if status['macaddress'] in self.previous_status:
 				##Check if key in state
 				if key in self.previous_status[status['macaddress']]:					
 					##If the values are same, skip it to make mqtt less chatty #17
+				
 					if self.previous_status[status['macaddress']][key] == value:
 						#print ("value same key:%s, value:%s vs : %s" %  (key,value,self.previous_status[status['macaddress']][key]))					
 						continue
 					else:
 						""
-						#print ("value NOT Same key:%s, value:%s vs : %s" %  (key,value,self.previous_status[status['macaddress']][key]))						
-				
-				
-			pubResult = self._publish(self.config["mqtt_topic_prefix"] + status['macaddress']+'/'+key+ '/value',bytes(status[key]))			
+						#print ("value NOT Same key:%s, value:%s vs : %s" %  (key,value,self.previous_status[status['macaddress']][key]))										
+			
+			pubResult = self._publish(self.config["mqtt_topic_prefix"] + status['macaddress']+'/'+key+ '/value',value)			
+			
 			
 			if pubResult != None:					
 				logger.warning('Publishing Result: "%s"' % mqtt.error_string(pubResult))

@@ -661,7 +661,7 @@ class ac_db(device):
 			
 	def get_key(self,list,search_value):
 		
-		for key,value in list.iteritems():  			
+		for key,value in list.items():  			
 			if value == search_value:
 				return key
 		##Not found so return value;
