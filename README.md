@@ -17,7 +17,7 @@ pip install paho-mqtt
 pip install pyyaml
 pip install PyCrypto
 ```
-1. copy sample_config.ym_ to config.yml
+1. copy sample_config.ym_ to config.yml under /settings folder or the data-dir you speified
 2. Edit config to match your enviroment
 3. run ./monitor.py (or python monitor.py)
 
