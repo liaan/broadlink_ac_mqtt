@@ -286,7 +286,8 @@ class AcToMqtt:
 			##Function is second last
 			function = msg.topic.split('/')[-2]			
 			address = msg.topic.split('/')[-3]
-			address = address.encode('ascii','ignore')
+			##Make sure its proper STR .. python3  #43
+			address = address.encode('ascii','ignore').decode()			
 			value = msg.payload
 			logger.debug('Mqtt decoded --> Function: %s, Address: %s, value: %s' %(function,address,value))			
 
