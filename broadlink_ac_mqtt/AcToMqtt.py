@@ -283,12 +283,13 @@ class AcToMqtt:
 
 		try:
 			logger.debug('Mqtt Message Received! Userdata: %s, Message %s' % (userdata, msg.topic+" "+str(msg.payload)))
-			##Function is second last
-			function = msg.topic.split('/')[-2]			
+			##Function is second last .. decode to str #43
+			function = msg.topic.split('/')[-2].decode()		
 			address = msg.topic.split('/')[-3]
 			##Make sure its proper STR .. python3  #43
-			address = address.encode('ascii','ignore').decode()			
-			value = msg.payload
+			address = address.encode('ascii','ignore')	
+			#43 decode to force to str
+			value = msg.payload.decode()
 			logger.debug('Mqtt decoded --> Function: %s, Address: %s, value: %s' %(function,address,value))			
 
 		except Exception as e:	
