@@ -6,6 +6,8 @@
   * Akai 9000BTU  --> Tested and working
   * Rinnai  --> Tested and working .. autodiscovery name seems to be buggy
   * Kenwood --> In Testing
+  * Tornado X (2019 and up) --> Tested and working
+  * AUX ASW-H09A4/DE-R1DI --> Tested and working
   * In theory any Broadlink devtype == 0x4E2a (20010) using the AC Freedom APP
 
 #### Installation: 

@@ -283,11 +283,13 @@ class AcToMqtt:
 
 		try:
 			logger.debug('Mqtt Message Received! Userdata: %s, Message %s' % (userdata, msg.topic+" "+str(msg.payload)))
-			##Function is second last
-			function = msg.topic.split('/')[-2]			
+			##Function is second last .. decode to str #43
+			function = str(msg.topic.split('/')[-2])
 			address = msg.topic.split('/')[-3]
-			address = address.encode('ascii','ignore')
-			value = msg.payload
+			##Make sure its proper STR .. python3  #43 .. very
+			address = address.encode('ascii','ignore').decode()	
+			#43 decode to force to str
+			value = msg.payload.decode()
 			logger.debug('Mqtt decoded --> Function: %s, Address: %s, value: %s' %(function,address,value))			
 
 		except Exception as e:	
@@ -390,7 +392,7 @@ class AcToMqtt:
 		logger.debug('Mqtt connected! client=%s, userdata=%s, flags=%s, rc=%s' % (client, userdata, flags, rc))
 		# Subscribing in on_connect() means that if we lose the connection and
 		# reconnect then subscriptions will be renewed.
-		sub_topic = "/aircon/+/+/set"
+		sub_topic = self.config["mqtt_topic_prefix"]+ "+/+/set"
 		client.subscribe(sub_topic)
 		logger.debug('Listing on %s for messages' % (sub_topic))
 		##LWT
