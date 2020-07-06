@@ -23,7 +23,7 @@ pid_last_update = 0
 
 do_loop = False
 running = False
-softwareversion = "1.0.13"
+softwareversion = "1.0.13b"
 
 
 #*****************************************  Get going methods ************************************************
