@@ -95,7 +95,7 @@ to set values just publish to /aircon/mac_address/option/value/set  new_value  :
 ```
 mqtt:
   discovery: true
-  discovery_prefix: homeassistant
+  auto_discovery_topic: homeassistant
   
 ```
 

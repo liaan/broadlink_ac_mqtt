@@ -11,6 +11,8 @@ mqtt:
     passwd: karman
     topic_prefix: /aircon
     auto_discovery_topic: homeassistant
+    retain: False
+    discovery: False
 
 ##Devices
 devices:
