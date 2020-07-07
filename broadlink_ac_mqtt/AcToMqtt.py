@@ -183,12 +183,15 @@ class AcToMqtt:
 		if devices_array == {}:
 			print ("something went wrong, no devices found")
 			sys.exit()	
-		
+		if(self.config["mqtt_retain"]):
+			retain = self.config["mqtt_retain"]
+		else: 
+			retain = False	
 		for key in devices_array:
 			device = devices_array[key]			
 			topic = self.config["mqtt_auto_discovery_topic"]+"/climate/"+key+"/config"
 			##Publish						
-			self._publish(topic,json.dumps(device))			
+			self._publish(topic,json.dumps(device), retain = retain)			
 				
 	def publish_mqtt_info(self,status):	
 		 
@@ -231,8 +234,6 @@ class AcToMqtt:
 				
 				
 	def _publish(self,topic,value,retain=False,qos=0):
-		if(self.config["mqtt_retain"]):
-			retain = self.config["mqtt_retain"]
 		payload = value
 		logger.debug('publishing on topic "%s", data "%s"' % (topic, payload))			
 		pubResult = self._mqtt.publish(topic, payload=payload, qos=qos, retain=retain)

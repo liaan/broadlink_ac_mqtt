@@ -75,7 +75,8 @@ def read_config(config_file_path):
 	config["mqtt_client_id"] = config_file["mqtt"]["client_id"] if config_file["mqtt"]["client_id"] else 'broadlink_to_mqtt-'+str(time.time())
 	config["mqtt_topic_prefix"] = config_file["mqtt"]["topic_prefix"]
 	config["mqtt_auto_discovery_topic"] = config_file["mqtt"]["auto_discovery_topic"]
-	config["mqtt_retain"] = config_file["mqtt"]["retain"]
+	config["mqtt_retain"] = config_file["mqtt"]["retain"] if "retain" in config_file["mqtt"] else False
+	
 	
 	if config["mqtt_topic_prefix"] and config["mqtt_topic_prefix"].endswith("/") == False:
 		config["mqtt_topic_prefix"] = config["mqtt_topic_prefix"] + "/"
