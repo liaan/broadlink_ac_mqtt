@@ -3,6 +3,7 @@
 *.txt
 *.log
 config.yml
+desktop.ini
 
 .vscode/*
 env/*
