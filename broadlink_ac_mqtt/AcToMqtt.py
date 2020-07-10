@@ -183,8 +183,8 @@ class AcToMqtt:
 		if devices_array == {}:
 			print ("something went wrong, no devices found")
 			sys.exit()	
-		if(self.config["mqtt_retain"]):
-			retain = self.config["mqtt_retain"]
+		if(self.config["mqtt_auto_discovery_topic_retain"]):
+			retain = self.config["mqtt_auto_discovery_topic_retain"]
 		else: 
 			retain = False	
 		for key in devices_array:
