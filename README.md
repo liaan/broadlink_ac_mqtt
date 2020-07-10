@@ -7,7 +7,7 @@
   * Rinnai  --> Tested and working .. autodiscovery name seems to be buggy
   * Kenwood --> In Testing
   * Tornado X (2019 and up) --> Tested and working
-  * AUX ASW-H09A4/DE-R1DI ("non original" broadlink module) --> Tested and working
+  * AUX ASW-H09A4/DE-R1DI (Broadlink module) --> Tested and working
   * In theory any Broadlink devtype == 0x4E2a (20010) using the AC Freedom APP
 
 #### Installation: 
@@ -61,8 +61,8 @@ optional arguments:
   -mP MQTTPASSWORD, --mqttpassword MQTTPASSWORD
                         Mqtt Password
   -s, --discover        Discover devices
-  -d, --debug           set logging level to debug
-  -v, --version         Print Verions
+  -d, --debug           Set logging level to debug
+  -v, --version         Print Versions
   -dir DATA_DIR, --data_dir DATA_DIR
                         Data Folder -- Default to folder script is located
   -c CONFIG, --config CONFIG
@@ -72,7 +72,7 @@ optional arguments:
 
 example: Run in background
 ./monitor.py -b
-run with full debugging (logs to ac_to_mqtt.log in folder where monitor.py is located)
+run with full debugging (logs to log/out.log )
 ./monitor.py -d
 
 Dump all discovered devices so one can copy paste
