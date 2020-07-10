@@ -291,7 +291,7 @@ class AcToMqtt:
 			##Make sure its proper STR .. python3  #43 .. very
 			address = address.encode('ascii','ignore').decode("utf-8")
 			#43 decode to force to str
-			value = msg.payload.decode("utf-8")
+			value = str(msg.payload.decode("ascii"))
 			logger.debug('Mqtt decoded --> Function: %s, Address: %s, value: %s' %(function,address,value))			
 
 		except Exception as e:	
