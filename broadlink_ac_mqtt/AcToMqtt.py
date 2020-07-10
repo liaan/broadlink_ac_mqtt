@@ -183,12 +183,15 @@ class AcToMqtt:
 		if devices_array == {}:
 			print ("something went wrong, no devices found")
 			sys.exit()	
-		
+		if(self.config["mqtt_retain"]):
+			retain = self.config["mqtt_retain"]
+		else: 
+			retain = False	
 		for key in devices_array:
 			device = devices_array[key]			
 			topic = self.config["mqtt_auto_discovery_topic"]+"/climate/"+key+"/config"
 			##Publish						
-			self._publish(topic,json.dumps(device))			
+			self._publish(topic,json.dumps(device), retain = retain)			
 				
 	def publish_mqtt_info(self,status):	
 		 
@@ -231,7 +234,6 @@ class AcToMqtt:
 				
 				
 	def _publish(self,topic,value,retain=False,qos=0):
-		
 		payload = value
 		logger.debug('publishing on topic "%s", data "%s"' % (topic, payload))			
 		pubResult = self._mqtt.publish(topic, payload=payload, qos=qos, retain=retain)
@@ -248,7 +250,7 @@ class AcToMqtt:
 		
 		
 		##Set last will and testament
-		self._mqtt.will_set("/aircon/LWT","offline",True)
+		self._mqtt.will_set(self.config["mqtt_topic_prefix"]+"LWT","offline",True)
 		
 		##Auth		
 		if self.config["mqtt_user"] and self.config["mqtt_password"]:			
@@ -274,7 +276,7 @@ class AcToMqtt:
 	def _on_mqtt_log(self,client, userdata, level, buf):
 			
 		if level == mqtt.MQTT_LOG_ERR:
-			logger.debug("Mqtt log" + buf)
+			logger.debug("Mqtt log: " + buf)
 		
 	def _mqtt_on_subscribe(self,client, userdata, mid, granted_qos):
 		logger.debug("Mqtt Subscribed")
@@ -322,7 +324,7 @@ class AcToMqtt:
 				if status :
 					self.publish_mqtt_info(status)
 			else:
-				logger.debug("Switch on has invalid value, values is on/off received %s",value)
+				logger.debug("Switch has invalid value, values is on/off received %s",value)
 				return
 				
 		elif function == "mode":
@@ -332,7 +334,7 @@ class AcToMqtt:
 				self.publish_mqtt_info(status)
 				
 			else:
-				logger.debug("Mode on has invalid value %s",value)
+				logger.debug("Mode has invalid value %s",value)
 				return
 		elif function == "fanspeed":
 			
@@ -341,7 +343,7 @@ class AcToMqtt:
 				self.publish_mqtt_info(status)
 				
 			else:
-				logger.debug("Fanspeed on has invalid value %s",value)
+				logger.debug("Fanspeed has invalid value %s",value)
 				return
 				
 		elif function == "fanspeed_homeassistant":
@@ -351,7 +353,7 @@ class AcToMqtt:
 				self.publish_mqtt_info(status)
 				
 			else:
-				logger.debug("Fanspeed on has invalid value %s",value)
+				logger.debug("Fanspeed_homeassistant has invalid value %s",value)
 				return
 				
 		elif function == "mode_homekit":
@@ -361,7 +363,7 @@ class AcToMqtt:
 				self.publish_mqtt_info(status)
 				
 			else:
-				logger.debug("Fanspeed on has invalid value %s",value)
+				logger.debug("Mode_homekit has invalid value %s",value)
 				return
 		elif function == "mode_homeassistant":
 			
@@ -370,7 +372,7 @@ class AcToMqtt:
 				self.publish_mqtt_info(status)
 				
 			else:
-				logger.debug("Fanspeed on has invalid value %s",value)
+				logger.debug("Mode_homeassistant has invalid value %s",value)
 				return		
 		else:
 			logger.debug("No function match")
