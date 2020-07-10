@@ -11,7 +11,7 @@ mqtt:
     passwd: koos_se_password
     topic_prefix: /aircon
     auto_discovery_topic: homeassistant
-    retain: False
+    auto_discovery_topic_retain: False
     discovery: False
 
 ##Devices
