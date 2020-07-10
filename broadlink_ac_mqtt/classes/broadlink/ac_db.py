@@ -533,9 +533,16 @@ class ac_db(device):
 		  self.logger.debug ("AcInfo: " + ' '.join(format(x, '08b') for x in response_payload[9:] )  )	
 
 		  
-		  
-		  ##Its only the last 5 bits?
+		  if len(response_payload) < 15: ##Hack for some invalid packets. should get proper length at some point.
+			self.logger.debug ("AcInfo: Invalid, seems to short?")	
+			return 0
+
+		  ##Its only the last 5 bits?		  
 		  self.status['ambient_temp'] = response_payload[15] & 0b00011111
+		  
+		  	
+			
+		
 		  
 		  return self.make_nice_status(self.status)
 		else:
