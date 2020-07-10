@@ -505,48 +505,34 @@ class ac_db(device):
 		
 		err = response[0x22] | (response[0x23] << 8)
 		if err == 0:
-		  aes = AES.new(bytes(self.key), AES.MODE_CBC, bytes(self.iv))
+			aes = AES.new(bytes(self.key), AES.MODE_CBC, bytes(self.iv))
 
-		  # response = bytearray.fromhex("5aa5aa555aa5aa55000000000000000000000000000000000000000000000000c6d000002a4e6a0055b9af41a70d43b401000000b9c00000aeaac104468cf91b485f38c67f7bf57f");
+			# response = bytearray.fromhex("5aa5aa555aa5aa55000000000000000000000000000000000000000000000000c6d000002a4e6a0055b9af41a70d43b401000000b9c00000aeaac104468cf91b485f38c67f7bf57f");
 		
-		  response_payload = aes.decrypt(bytes(response[0x38:]))
-		  response_payload = bytearray(response_payload)
+			response_payload = aes.decrypt(bytes(response[0x38:]))
+			response_payload = bytearray(response_payload)
 		  
 		   
 		  
-		  self.logger.debug ("Acinfo Raw Response: " + ' '.join(format(x, '08b') for x in response_payload )  )	
-		  self.logger.debug ("Acinfo Raw Hex: " + ' '.join(format(x, '02x') for x in response_payload )  )	
-		  #self.logger.debug ("Acinfo Raw Hex2: " + ' '.join(format(x, '02x') for x in response_payload )  )	
-		  #self.logger.debug ("Acinfo Raw Ascrii: " + ' '.join(format(x, 'c') for x in response )  )	
-		  
-		  #print "AC INFO Payload:" + response_payload+"\n"
-		  #print "AC INFO::" + ''.join(x.encode('hex') for x in response_payload )
-		  
-		  
-		  
-		  #print "AC INFO Payload:" + response_payload+"\n"
-		  #print "bla"  + ' '.join(format(x, '08b') for x in response_payload[9:] )  
-		  
-		  #print "AC INFO2:" + ''.join(x.encode('binary') for x in response_payload )
-		  
-		  response_payload  = response_payload[2:]  ##Drop leading stuff as dont need
-		  self.logger.debug ("AcInfo: " + ' '.join(format(x, '08b') for x in response_payload[9:] )  )	
-
-		  
-		  if len(response_payload) < 15: ##Hack for some invalid packets. should get proper length at some point.
-			self.logger.debug ("AcInfo: Invalid, seems to short?")	
-			return 0
-
-		  ##Its only the last 5 bits?		  
-		  self.status['ambient_temp'] = response_payload[15] & 0b00011111
-		  
-		  	
-			
+			self.logger.debug ("Acinfo Raw Response: " + ' '.join(format(x, '08b') for x in response_payload )  )	
+			self.logger.debug ("Acinfo Raw Hex: " + ' '.join(format(x, '02x') for x in response_payload )  )	
 		
 		  
-		  return self.make_nice_status(self.status)
+			response_payload  = response_payload[2:]  ##Drop leading stuff as dont need
+			self.logger.debug ("AcInfo: " + ' '.join(format(x, '08b') for x in response_payload[9:] )  )	
+
+		  
+			if len(response_payload) < 15: ##Hack for some invalid packets. should get proper length at some point.
+				self.logger.debug ("AcInfo: Invalid, seems to short?")	
+				return 0
+
+			##Its only the last 5 bits?		  
+			self.status['ambient_temp'] = response_payload[15] & 0b00011111		
+		
+		  
+			return self.make_nice_status(self.status)
 		else:
-		  return 0
+			return 0
 		  
 		  
 	### Get AC Status
