@@ -8,7 +8,7 @@ mqtt:
     port: 1883
     client_id: ac_to_mqtt
     user: koos
-    passwd: karman
+    passwd: koos_se_password
     topic_prefix: /aircon
     auto_discovery_topic: homeassistant
     auto_discovery_topic_retain: False

@@ -182,11 +182,15 @@ class AcToMqtt:
 		devices_array = self.make_devices_array_from_devices(devices)
 		if devices_array == {}:
 			print ("something went wrong, no devices found")
-			sys.exit()	
+			sys.exit()
+
+		##If retain is set for MQTT, then retain it		
 		if(self.config["mqtt_auto_discovery_topic_retain"]):
 			retain = self.config["mqtt_auto_discovery_topic_retain"]
 		else: 
 			retain = False	
+			
+		##Loop da loop all devices and publish discovery settings
 		for key in devices_array:
 			device = devices_array[key]			
 			topic = self.config["mqtt_auto_discovery_topic"]+"/climate/"+key+"/config"
@@ -289,9 +293,9 @@ class AcToMqtt:
 			function = str(msg.topic.split('/')[-2])
 			address = msg.topic.split('/')[-3]
 			##Make sure its proper STR .. python3  #43 .. very
-			address = address.encode('ascii','ignore').decode()	
+			address = address.encode('ascii','ignore').decode("utf-8")
 			#43 decode to force to str
-			value = msg.payload.decode()
+			value = str(msg.payload.decode("ascii"))
 			logger.debug('Mqtt decoded --> Function: %s, Address: %s, value: %s' %(function,address,value))			
 
 		except Exception as e:	

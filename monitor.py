@@ -12,7 +12,7 @@ import signal
 
 logger = logging.getLogger(__name__)
 AC = None
-softwareversion = "1.0.14"
+softwareversion = "1.0.14c"
 
 
 pid = str(os.getpid())
@@ -23,7 +23,7 @@ pid_last_update = 0
 
 do_loop = False
 running = False
-softwareversion = "1.0.13b"
+ 
 
 
 #*****************************************  Get going methods ************************************************
