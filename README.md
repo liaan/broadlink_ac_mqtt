@@ -1,4 +1,5 @@
 # Broadlink Air Conditioners to mqtt  
+[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](http://www.paypal.me/liaanvdm)
 #### Air Conditioners compatibility 
   * Dunham bush --> Tested and working
 
