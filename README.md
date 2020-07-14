@@ -19,7 +19,7 @@ pip install paho-mqtt
 pip install pyyaml
 pip install PyCrypto
 ```
-1. copy sample_config.ym_ to config.yml under /settings folder or the data-dir you speified
+1. copy sample_config.yml to config.yml under /settings folder or the data-dir you speified
 2. Edit config to match your enviroment
 3. run ./monitor.py (or python monitor.py)
 
@@ -40,7 +40,7 @@ devices:
 **Note:**  
 Some devices (confirmed on AUX  conditioner) return device **name** in chineese, like '奥克斯空调'.  
 Device renaming in 'AC Freedom' app does not affect. You can see empty **name** in '-S' option output or any artifacts.  
-So in case '-S' returns empty value and you plan to use HASS autodiscovery - the best way to configure yout device manually in **config.yml** and set 'self_discovery: False'.
+So in case '-S' returns empty value and you plan to use HASS autodiscovery - the best way to configure yout device manually in config.yml and set 'self_discovery: False'.
 
 command line arguments: 
 
@@ -89,9 +89,9 @@ to set values just publish to /aircon/mac_address/option/value/set  new_value  :
 
 # Home Assistant (www.home-assistant.io) Options
 
-### Now MQTT autodiscovery workes for HomeAsssitant  (https://www.home-assistant.io/docs/mqtt/discovery/)
+### Now MQTT autodiscovery works for HomeAsssitant  (https://www.home-assistant.io/docs/mqtt/discovery/)
 
-#### Enabling MQTT autodisocvery:
+#### Enabling MQTT autodiscovery:
 
 1. Edit config.yml and add below if not there. If already there, then make sure prefix matches configuration.yml file settings (in HA) 
 
