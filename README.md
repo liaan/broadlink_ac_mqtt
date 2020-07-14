@@ -37,7 +37,10 @@ devices:
 *********** stop copy above ************
 
 ```
-
+**Note:**  
+Some devices (confirmed on AUX  conditioner) return device **name** in chineese, like '奥克斯空调'.  
+Device renaming in 'AC Freedom' app does not affect. You can see empty **name** in '-S' option output or any artifacts.  
+So in case '-S' returns empty value and you plan to use HASS autodiscovery - the best way to configure yout device manually in **config.yml** and set 'self_discovery: False'.
 
 command line arguments: 
 
@@ -100,7 +103,7 @@ mqtt:
 ```
 
 
-**To add a device manually useing the configuration.yml in HA you can create a easy config to copy/paste by using -Hd (--dumphaconfig) . Just make sure your config.yml is updated with correct settings before running.**
+**To add a device manually using the configuration.yml in HA you can create a easy config to copy/paste by using -Hd (--dumphaconfig) . Just make sure your config.yml is updated with correct settings before running.**
 
 This is also nice to verify the autoconfig is correct that gets sent to HA using mqtt autoconfig
 
