@@ -10,6 +10,7 @@
   * Tornado X (2019 and up) --> Tested and working
     * Tornado top wifi 12x a.c Tested and reported as working
   * AUX ASW-H09A4/DE-R1DI (Broadlink module) --> Tested and working
+  * Ballu BSUI/IN-12HN8 (with intergated Wi-Fi module and AC Freedom app). --> Tested and working
   * In theory any Broadlink devtype == 0x4E2a (20010) using the AC Freedom APP
 
 #### Installation: 
