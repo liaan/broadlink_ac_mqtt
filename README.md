@@ -126,6 +126,8 @@ climate:
   - Low
   - Medium
   - High
+  - Turbo
+  - Mute
   max_temp: 32.0
   min_temp: 16.0
   mode_command_topic: /aircon/b4430dce73f1/mode_homeassistant/set
