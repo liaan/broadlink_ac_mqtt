@@ -340,6 +340,23 @@ class AcToMqtt:
 			else:
 				logger.debug("Mode has invalid value %s",value)
 				return
+		elif function == "turbo":			
+			status = self.device_objects[address].set_turbo(value)
+			if status :
+				self.publish_mqtt_info(status)
+				
+			else:
+				logger.debug("Turbo has invalid value %s",value)
+				return
+		elif function == "mute":
+			
+			status = self.device_objects[address].set_mute(value)
+			if status :
+				self.publish_mqtt_info(status)
+				
+			else:
+				logger.debug("Mute has invalid value %s",value)
+				return
 		elif function == "fanspeed":
 			
 			status = self.device_objects[address].set_fanspeed(value)

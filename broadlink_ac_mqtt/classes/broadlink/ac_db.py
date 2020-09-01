@@ -415,7 +415,31 @@ class ac_db(device):
 		else:
 			self.logger.debug("Not found mode value %s" , str(mode_text))
 			return False
-	
+	def set_mute(self,value):
+		##Make sure latest info as cannot just update one things, have set all
+		self.get_ac_states()
+		
+		mode = self.STATIC.ONOFF.__dict__.get(value)
+		if mode != None:
+			self.status['mute'] = mode
+			self.set_ac_status()
+			return self.make_nice_status(self.status)
+		else:
+			self.logger.debug("Not found mute value %s" , str(value))
+			return False
+	def set_turbo(self,value):
+		##Make sure latest info as cannot just update one things, have set all
+		self.get_ac_states()
+		
+		mode = self.STATIC.ONOFF.__dict__.get(value)
+		if mode != None:
+			self.status['turbo'] = mode
+			self.set_ac_status()
+			return self.make_nice_status(self.status)
+		else:
+			self.logger.debug("Not found Turbo value %s" , str(value))
+			return False
+
 	def set_homekit_mode(self,status):
 		if type(status) is not str:
 			self.logger.debug('Status variable is not string %s',type(status))
