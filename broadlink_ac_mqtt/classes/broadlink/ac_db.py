@@ -284,6 +284,7 @@ class ac_db(device):
 			MEDIUM 	= 	0b00000010
 			HIGH 	=	0b00000001
 			AUTO 	= 	0b00000101  
+			NONE 	=	0b00000000
 		
 		 		
 		class MODE:
@@ -410,6 +411,8 @@ class ac_db(device):
 		mode = self.STATIC.FAN.__dict__.get(mode_text.upper())
 		if mode != None:
 			self.status['fanspeed'] = mode
+			self.status['turbo']  = self.STATIC.ONOFF.OFF
+			self.status['mute']  = self.STATIC.ONOFF.OFF
 			self.set_ac_status()
 			return self.make_nice_status(self.status)
 		else:
@@ -422,6 +425,8 @@ class ac_db(device):
 		mode = self.STATIC.ONOFF.__dict__.get(value)
 		if mode != None:
 			self.status['mute'] = mode
+			self.status['turbo']  = self.STATIC.ONOFF.OFF			
+			self.status['fanspeed'] = self.STATIC.FAN.NONE
 			self.set_ac_status()
 			return self.make_nice_status(self.status)
 		else:
@@ -434,6 +439,8 @@ class ac_db(device):
 		mode = self.STATIC.ONOFF.__dict__.get(value)
 		if mode != None:
 			self.status['turbo'] = mode
+			self.status['mute']  = self.STATIC.ONOFF.OFF
+			self.status['fanspeed'] = self.STATIC.FAN.NONE
 			self.set_ac_status()
 			return self.make_nice_status(self.status)
 		else:
