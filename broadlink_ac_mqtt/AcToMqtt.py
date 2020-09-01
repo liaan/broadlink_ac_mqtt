@@ -166,6 +166,7 @@ class AcToMqtt:
 				,"max_temp":32.0
 				,"min_temp":16.0
 				,"precision": 0.5
+				,"unique_id": device.status["macaddress"]
 			}
 			
 			devices_array[device.status["macaddress"]] = device_array
