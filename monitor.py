@@ -12,7 +12,7 @@ import signal
 
 logger = logging.getLogger(__name__)
 AC = None
-softwareversion = "1.0.14c"
+softwareversion = "1.0.15"
 
 
 pid = str(os.getpid())
