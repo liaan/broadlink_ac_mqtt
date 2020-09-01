@@ -188,8 +188,11 @@ class AcToMqtt:
 		##If retain is set for MQTT, then retain it		
 		if(self.config["mqtt_auto_discovery_topic_retain"]):
 			retain = self.config["mqtt_auto_discovery_topic_retain"]
+			
 		else: 
 			retain = False	
+
+		logger.debug("HA config Retain set to: " + str(retain))
 			
 		##Loop da loop all devices and publish discovery settings
 		for key in devices_array:
