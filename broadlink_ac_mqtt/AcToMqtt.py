@@ -362,8 +362,18 @@ class AcToMqtt:
 				return
 				
 		elif function == "fanspeed_homeassistant":
-			
-			status = self.device_objects[address].set_fanspeed(value)
+			if value.lower() == "turbo":
+				status = self.device_objects[address].set_turbo("ON")
+				
+				#status = self.device_objects[address].set_mute("OFF")
+			elif value.lower() == "mute":				
+				status = self.device_objects[address].set_mute("ON")
+				
+			else:
+				#status = self.device_objects[address].set_mute("ON")
+				#status = self.device_objects[address].set_turbo("OFF")
+				status = self.device_objects[address].set_fanspeed(value)
+			 
 			if status :
 				self.publish_mqtt_info(status)
 				

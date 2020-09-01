@@ -618,6 +618,8 @@ class ac_db(device):
 			self.status['turbo'] =response_payload[14] >> 6& 0b00000001
 			self.status['clean'] = response_payload[18] >> 2& 0b00000001
 			
+
+
 			self.status['lastupdate'] = time.time()
 			 
 			return self.make_nice_status(self.status)
@@ -641,8 +643,7 @@ class ac_db(device):
 		status_nice['mildew'] = self.get_key(self.STATIC.ONOFF.__dict__,status['mildew'])
 		status_nice['health'] = self.get_key(self.STATIC.ONOFF.__dict__,status['health'])
 		status_nice['fixation_h'] = self.get_key(self.STATIC.FIXATION.VERTICAL.__dict__,status['fixation_h'])
-		status_nice['fanspeed']  = self.get_key(self.STATIC.FAN.__dict__,status['fanspeed'])
-		status_nice['fanspeed_homeassistant']  = status_nice['fanspeed'].capitalize()
+		
 		
 		status_nice['ifeel'] = self.get_key(self.STATIC.ONOFF.__dict__,status['ifeel'])
 		status_nice['mute'] = self.get_key(self.STATIC.ONOFF.__dict__,status['mute'])
@@ -679,7 +680,18 @@ class ac_db(device):
 			status_nice['mode_homeassistant'] = "fan_only"
 		else:
 			status_nice['mode_homeassistant'] = "Error"
- 			
+ 		
+		##Make fanspeed logic
+		status_nice['fanspeed']  = self.get_key(self.STATIC.FAN.__dict__,status['fanspeed'])
+		status_nice['fanspeed_homeassistant']  = self.get_key(self.STATIC.FAN.__dict__,status['fanspeed']).title()
+
+		if status_nice['mute'] == "ON":
+			status_nice['fanspeed_homeassistant']  = "Mute"
+			status_nice['fanspeed']  = "MUTE"
+		elif status_nice['turbo'] == "ON":
+			status_nice['fanspeed_homeassistant']  = "Turbo"
+			status_nice['fanspeed']  = "TURBO"
+		
 			
 		return status_nice
 			
