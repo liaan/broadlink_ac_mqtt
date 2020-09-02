@@ -167,9 +167,8 @@ class AcToMqtt:
 				,"min_temp":16.0
 				,"precision": 0.5
 				,"unique_id": device.status["macaddress"]
-				,"device" : {"ids":device.status["macaddress"],"name":str(name.decode("utf-8")),"model":'Aircon',"mf":"Broadlink","sw":broadlink.version}
-				
-				, "pl_avail":"online"
+				,"device" : {"ids":device.status["macaddress"],"name":str(name.decode("utf-8")),"model":'Aircon',"mf":"Broadlink","sw":broadlink.version}				
+				,"pl_avail":"online"
 				,"pl_not_avail":"offline"
 				,"availability_topic": self.config["mqtt_topic_prefix"]  +"LWT"
 			}
@@ -207,7 +206,12 @@ class AcToMqtt:
 			self._publish(topic,json.dumps(device), retain = retain)			
 				
 	def publish_mqtt_info(self,status,force_update = False) :	
-		 
+		##If auto discovery is used, then always update
+		if not force_update:
+			force_update = True if "mqtt_auto_discovery_topic" in self.config else False
+
+		logger.debug("Force update is: " + str(force_update))
+
 		##Publish all values in status
 		for key in status:
 			##Make sure its a string
@@ -414,6 +418,8 @@ class AcToMqtt:
 			else:
 				logger.debug("Command not valid: "+ value)
 				return
+
+				
 			if status:
 				self.publish_mqtt_info(status,force_update=True)				
 			else:
@@ -443,6 +449,8 @@ class AcToMqtt:
 		sub_topic = self.config["mqtt_topic_prefix"]+ "+/+/set"
 		client.subscribe(sub_topic)
 		logger.debug('Listing on %s for messages' % (sub_topic))
+
+
 		##LWT
 		self._publish(self.config["mqtt_topic_prefix"]+'LWT','online',retain=True)
 
