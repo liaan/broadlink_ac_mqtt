@@ -208,7 +208,7 @@ class AcToMqtt:
 	def publish_mqtt_info(self,status,force_update = False) :	
 		##If auto discovery is used, then always update
 		if not force_update:
-			force_update = True if "mqtt_auto_discovery_topic" in self.config else False
+			force_update = True if "mqtt_auto_discovery_topic" in self.config and self.config["mqtt_auto_discovery_topic"] else False
 
 		logger.debug("Force update is: " + str(force_update))
 
