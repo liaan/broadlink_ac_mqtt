@@ -206,17 +206,15 @@ class AcToMqtt:
 			##Publish						
 			self._publish(topic,json.dumps(device), retain = retain)			
 				
-	def publish_mqtt_info(self,status):	
+	def publish_mqtt_info(self,status,force_update = False) :	
 		 
 		##Publish all values in status
 		for key in status:
 			##Make sure its a string
-			value = status[key]
-			
-			
+			value = status[key]				
 		 
 			##check if device already in previous_status
-			if status['macaddress'] in self.previous_status:
+			if not force_update and status['macaddress'] in self.previous_status:
 				##Check if key in state
 				if key in self.previous_status[status['macaddress']]:					
 					##If the values are same, skip it to make mqtt less chatty #17
@@ -408,6 +406,20 @@ class AcToMqtt:
 			else:
 				logger.debug("Mode_homeassistant has invalid value %s",value)
 				return		
+		elif function == "state" :
+			
+			if value == "refresh":
+				logger.debug("Refreshing states")
+				status = self.device_objects[address].get_ac_status()
+			else:
+				logger.debug("Command not valid: "+ value)
+				return
+			if status:
+				self.publish_mqtt_info(status,force_update=True)				
+			else:
+				logger.debug("Unable to refresh")
+				return
+			return
 		else:
 			logger.debug("No function match")
 			return
@@ -432,5 +444,5 @@ class AcToMqtt:
 		client.subscribe(sub_topic)
 		logger.debug('Listing on %s for messages' % (sub_topic))
 		##LWT
-		self._publish(self.config["mqtt_topic_prefix"]+'LWT','online')
+		self._publish(self.config["mqtt_topic_prefix"]+'LWT','online',retain=True)
 
