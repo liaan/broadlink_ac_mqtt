@@ -167,7 +167,11 @@ class AcToMqtt:
 				,"min_temp":16.0
 				,"precision": 0.5
 				,"unique_id": device.status["macaddress"]
-				,"device" : {"ids":device.status["macaddress"],"name":str(name.decode("utf-8")),"mf":"Aircon","sw":"234"}
+				,"device" : {"ids":device.status["macaddress"],"name":str(name.decode("utf-8")),"model":'Aircon',"mf":"Broadlink","sw":broadlink.version}
+				
+				, "pl_avail":"online"
+				,"pl_not_avail":"offline"
+				,"availability_topic": self.config["mqtt_topic_prefix"]  +"LWT"
 			}
 			
 			devices_array[device.status["macaddress"]] = device_array
