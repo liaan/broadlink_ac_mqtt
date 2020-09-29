@@ -25,7 +25,7 @@ device_objects = {}
 class AcToMqtt:
 	previous_status = {}
 	last_update = {}
-	last_publish = {}
+	last_force_publish = {}
 	
 	def __init__(self,config):
 		self.config = config
@@ -211,7 +211,9 @@ class AcToMqtt:
 		now = time.time()
 
 		if not force_update:
-			force_update = self.last_publish[macaddress] + self.config["mqtt_interval"] < now
+			force_update = (macaddress not in self.last_force_publish) or (self.last_force_publish[macaddress] + self.config["mqtt_interval"] < now)
+			if force_update:
+				self.last_force_publish[macaddress] = now
 
 		logger.debug("Force update is: " + str(force_update))
 
@@ -230,9 +232,9 @@ class AcToMqtt:
 						#print ("value same key:%s, value:%s vs : %s" %  (key,value,self.previous_status[macaddress][key]))					
 						continue
 					else:
-						self.last_publish[macaddress] = now
+						""
 						#print ("value NOT Same key:%s, value:%s vs : %s" %  (key,value,self.previous_status[macaddress][key]))										
-			
+		
 			pubResult = self._publish(self.config["mqtt_topic_prefix"] + macaddress+'/'+key+ '/value',value)			
 			
 			
