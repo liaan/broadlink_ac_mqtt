@@ -739,8 +739,7 @@ class ac_db(device):
         payload[9] = 0x01
         payload[10] = 0b00000000 | temperature << 3 | self.status['fixation_v']
         payload[11] = 0b00000000 | self.status['fixation_h'] << 5
-        payload[
-            12] = 0b00001111 | temperature_05 << 7  # bit 1:  0.5  #bit   if 0b?1 then nothing done....  last 6 is some sort of packet_id
+        payload[12] = 0b00001111 | temperature_05 << 7  # bit 1:  0.5  #bit   if 0b?1 then nothing done....  last 6 is some sort of packet_id
         payload[13] = 0b00000000 | self.status['fanspeed'] << 5
         payload[14] = 0b00000000 | self.status['turbo'] << 6 | self.status['mute'] << 7
         payload[15] = 0b00000000 | self.status['mode'] << 5 | self.status['sleep'] << 2
