@@ -558,8 +558,7 @@ class ac_db(device):
     ## GEt the current status of the aircon and parse into status array a one have to send full status each time for update, cannot just send one setting
     ##
     def get_ac_states(self, force_update=False):
-        GET_STATES = bytearray.fromhex(
-            "0C00BB0006800000020011012B7E0000")  ##From app queryAuxinfo:bb0006800000020011012b7e
+        GET_STATES = bytearray.fromhex("0C00BB0006800000020011012B7E0000")  ##From app queryAuxinfo:bb0006800000020011012b7e
 
         ##Check if the status is up to date to reduce timeout issues. Can be overwritten by force_update
         if (force_update == False and (self.status['lastupdate'] + self.update_interval) > time.time()):
