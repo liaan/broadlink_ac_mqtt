@@ -314,7 +314,7 @@ class ac_db(device):
 		self.set_default_values()		
 		self.status['macaddress'] = ''.join(format(x, '02x') for x in mac) 
 		self.status['hostip'] = host
-        self.status['devicename'] = name
+		self.status['devicename'] = name
 		
 		
 		self.logging.basicConfig(level=(self.logging.DEBUG if debug else self.logging.INFO))
