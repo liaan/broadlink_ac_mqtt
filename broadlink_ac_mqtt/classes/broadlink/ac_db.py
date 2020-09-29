@@ -557,7 +557,7 @@ class ac_db(device):
 				return 0
 
 			##Its only the last 5 bits?		  
-			self.status['ambient_temp'] = (response_payload[15] & 0b00011111) + (response_payload[31] & 0b00011111) / 10
+			self.status['ambient_temp'] = (response_payload[15] & 0b00011111) + float(response_payload[31] & 0b00011111) / 10
 		
 		  
 			return self.make_nice_status(self.status)
