@@ -165,7 +165,7 @@ class AcToMqtt:
 				,"modes": ['off',"cool","heat","fan_only","dry"]
 				,"max_temp":32.0
 				,"min_temp":16.0
-				,"precision": 0.5
+				,"temp_step": 0.5
 				,"unique_id": device.status["macaddress"]
 				,"device" : {"ids":device.status["macaddress"],"name":str(name.decode("utf-8")),"model":'Aircon',"mf":"Broadlink","sw":broadlink.version}				
 				,"pl_avail":"online"
