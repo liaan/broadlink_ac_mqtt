@@ -7,12 +7,12 @@ mqtt:
     host: mqtt
     port: 1883
     client_id: ac_to_mqtt
+    interval: 0
     user: koos
     passwd: koos_se_password
-    topic_prefix: /aircon
+    topic_prefix: aircon
     auto_discovery_topic: homeassistant
     auto_discovery_topic_retain: False
-    discovery: False
 
 ##Devices
 devices:

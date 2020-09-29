@@ -25,6 +25,7 @@ device_objects = {}
 class AcToMqtt:
 	previous_status = {}
 	last_update = {}
+	last_publish = {}
 	
 	def __init__(self,config):
 		self.config = config
@@ -205,10 +206,12 @@ class AcToMqtt:
 			##Publish						
 			self._publish(topic,json.dumps(device), retain = retain)			
 				
-	def publish_mqtt_info(self,status,force_update = False) :	
-		##If auto discovery is used, then always update
+	def publish_mqtt_info(self,status,force_update = False):
+		macaddress = status['macaddress']
+		now = time.time()
+
 		if not force_update:
-			force_update = True if "mqtt_auto_discovery_topic" in self.config and self.config["mqtt_auto_discovery_topic"] else False
+			force_update = self.last_publish[macaddress] + self.config["mqtt_interval"] < now
 
 		logger.debug("Force update is: " + str(force_update))
 
@@ -218,19 +221,19 @@ class AcToMqtt:
 			value = status[key]				
 		 
 			##check if device already in previous_status
-			if not force_update and status['macaddress'] in self.previous_status:
+			if not force_update and macaddress in self.previous_status:
 				##Check if key in state
-				if key in self.previous_status[status['macaddress']]:					
+				if key in self.previous_status[macaddress]:					
 					##If the values are same, skip it to make mqtt less chatty #17
 				
-					if self.previous_status[status['macaddress']][key] == value:
-						#print ("value same key:%s, value:%s vs : %s" %  (key,value,self.previous_status[status['macaddress']][key]))					
+					if self.previous_status[macaddress][key] == value:
+						#print ("value same key:%s, value:%s vs : %s" %  (key,value,self.previous_status[macaddress][key]))					
 						continue
 					else:
-						""
-						#print ("value NOT Same key:%s, value:%s vs : %s" %  (key,value,self.previous_status[status['macaddress']][key]))										
+						self.last_publish[macaddress] = now
+						#print ("value NOT Same key:%s, value:%s vs : %s" %  (key,value,self.previous_status[macaddress][key]))										
 			
-			pubResult = self._publish(self.config["mqtt_topic_prefix"] + status['macaddress']+'/'+key+ '/value',value)			
+			pubResult = self._publish(self.config["mqtt_topic_prefix"] + macaddress+'/'+key+ '/value',value)			
 			
 			
 			if pubResult != None:					
@@ -241,11 +244,11 @@ class AcToMqtt:
 				break
 			
 		##Set previous to current
-		self.previous_status[status['macaddress']] = status
+		self.previous_status[macaddress] = status
 		
 		return 
 
-		#self._publish(binascii.hexlify(status['macaddress'])+'/'+ 'temp/value',status['temp']);
+		#self._publish(binascii.hexlify(macaddress)+'/'+ 'temp/value',status['temp']);
 				
 				
 	def _publish(self,topic,value,retain=False,qos=0):
