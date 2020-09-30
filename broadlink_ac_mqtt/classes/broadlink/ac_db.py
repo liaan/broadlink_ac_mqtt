@@ -556,10 +556,11 @@ class ac_db(device):
 				self.logger.debug ("AcInfo: Invalid, seems to short?")	
 				return 0
 
-			##Its only the last 5 bits?		  
-			self.status['ambient_temp'] = (response_payload[15] & 0b00011111) + float(response_payload[31] & 0b00011111) / 10
-		
-		  
+			##Its only the last 5 bits?
+			ambient_temp = response_payload[15] & 0b00011111
+			if ambient_temp:
+				self.status['ambient_temp'] = ambient_temp + float(response_payload[31] & 0b00011111) / 10
+
 			return self.make_nice_status(self.status)
 		else:
 			return 0

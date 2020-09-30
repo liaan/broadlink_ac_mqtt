@@ -229,7 +229,10 @@ class AcToMqtt:
 					else:
 						""
 						#print ("value NOT Same key:%s, value:%s vs : %s" %  (key,value,self.previous_status[status['macaddress']][key]))										
-			
+
+			if value is None:
+				continue
+
 			pubResult = self._publish(self.config["mqtt_topic_prefix"] + status['macaddress']+'/'+key+ '/value',value)			
 			
 			
