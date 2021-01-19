@@ -13,7 +13,7 @@ import signal
 
 logger = logging.getLogger(__name__)
 AC = None
-softwareversion = "1.0.16"
+softwareversion = "1.0.17"
 
 
 pid = str(os.getpid())
@@ -357,7 +357,7 @@ def start():
 			
 		except Exception as e:								
 			
-			logger.debug(e)
+			logger.error(e)
 				
 		finally:
 			##cleanup
