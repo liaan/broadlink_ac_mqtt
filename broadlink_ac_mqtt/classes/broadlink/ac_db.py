@@ -15,240 +15,241 @@ version = "1.1.2"
 def gendevice(devtype , host, mac,name=None, cloud=None,update_interval = 0):
 	#print format(devtype,'02x')
 	##We only care about 1 device type...  
-  	if devtype == 0x4E2a: # Danham Bush
+	if devtype == 0x4E2a: # Danham Bush
 		return ac_db(host=host, mac=mac,name=name, cloud=cloud,devtype= devtype,update_interval = 0)
 	else:
 		return device(host=host, mac=mac,devtype =devtype,update_interval = update_interval)
-  
+
 
 def discover(timeout=None, local_ip_address=None):
-  if local_ip_address is None:
-	  s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-	  s.connect(('8.8.8.8', 53))  # connecting to a UDP address doesn't send packets
-	  local_ip_address = s.getsockname()[0]
-  address = local_ip_address.split('.')
-  cs = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-  cs.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-  cs.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-  cs.bind((local_ip_address,0))
-  port = cs.getsockname()[1]
-  starttime = time.time()
+	if local_ip_address is None:
+		s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+		s.connect(('8.8.8.8', 53))  # connecting to a UDP address doesn't send packets
+		local_ip_address = s.getsockname()[0]
+	address = local_ip_address.split('.')
+	cs = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+	cs.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+	cs.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+	cs.bind((local_ip_address,0))
+	port = cs.getsockname()[1]
+	starttime = time.time()
 
-  devices = []
+	devices = []
 
-  timezone = int(time.timezone/-3600)
-  packet = bytearray(0x30)
+	timezone = int(time.timezone/-3600)
+	packet = bytearray(0x30)
 
-  year = datetime.now().year
+	year = datetime.now().year
 
-  if timezone < 0:
-	packet[0x08] = 0xff + timezone - 1
-	packet[0x09] = 0xff
-	packet[0x0a] = 0xff
-	packet[0x0b] = 0xff
-  else:
-	packet[0x08] = timezone
-	packet[0x09] = 0
-	packet[0x0a] = 0
-	packet[0x0b] = 0
-  packet[0x0c] = year & 0xff
-  packet[0x0d] = year >> 8
-  packet[0x0e] = datetime.now().minute
-  packet[0x0f] = datetime.now().hour
-  subyear = str(year)[2:]
-  packet[0x10] = int(subyear)
-  packet[0x11] = datetime.now().isoweekday()
-  packet[0x12] = datetime.now().day
-  packet[0x13] = datetime.now().month
-  packet[0x18] = int(address[0])
-  packet[0x19] = int(address[1])
-  packet[0x1a] = int(address[2])
-  packet[0x1b] = int(address[3])
-  packet[0x1c] = port & 0xff
-  packet[0x1d] = port >> 8
-  packet[0x26] = 6
-  checksum = 0xbeaf
+	if timezone < 0:
+		packet[0x08] = 0xff + timezone - 1
+		packet[0x09] = 0xff
+		packet[0x0a] = 0xff
+		packet[0x0b] = 0xff
+	else:
+		packet[0x08] = timezone
+		packet[0x09] = 0
+		packet[0x0a] = 0
+		packet[0x0b] = 0
+	packet[0x0c] = year & 0xff
+	packet[0x0d] = year >> 8
+	packet[0x0e] = datetime.now().minute
+	packet[0x0f] = datetime.now().hour
+	subyear = str(year)[2:]
+	packet[0x10] = int(subyear)
+	packet[0x11] = datetime.now().isoweekday()
+	packet[0x12] = datetime.now().day
+	packet[0x13] = datetime.now().month
+	packet[0x18] = int(address[0])
+	packet[0x19] = int(address[1])
+	packet[0x1a] = int(address[2])
+	packet[0x1b] = int(address[3])
+	packet[0x1c] = port & 0xff
+	packet[0x1d] = port >> 8
+	packet[0x26] = 6
+	checksum = 0xbeaf
 
-  for i in range(len(packet)):
-	  checksum += packet[i]
-  checksum = checksum & 0xffff
-  packet[0x20] = checksum & 0xff
-  packet[0x21] = checksum >> 8
+	for i in range(len(packet)):
+		checksum += packet[i]
+	checksum = checksum & 0xffff
+	packet[0x20] = checksum & 0xff
+	packet[0x21] = checksum >> 8
 
-  cs.sendto(packet, ('255.255.255.255', 80))
-  if timeout is None:
-	response = cs.recvfrom(1024)
-	responsepacket = bytearray(response[0])
-	host = response[1]	
-	mac = responsepacket[0x3a:0x40]	
-	mac = mac[::-1]  ##Flip correct
-	devtype = responsepacket[0x34] | responsepacket[0x35] << 8
-	name = responsepacket[0x40:].split(b'\x00')[0].decode('utf-8')
-	if not name:
-		name = mac
-	cloud = bool(responsepacket[-1])
-	cs.close()
-	return gendevice(devtype, host, mac,name=name,cloud=cloud)
-  else:
-	while (time.time() - starttime) < timeout:
-	  cs.settimeout(timeout - (time.time() - starttime))
-	  try:
+	cs.sendto(packet, ('255.255.255.255', 80))
+	if timeout is None:
 		response = cs.recvfrom(1024)
-	  except socket.timeout:
-		return devices
-	  responsepacket = bytearray(response[0])
-	  
-	  #print ":".join("{:02x}".format(c) for c in responsepacket)
-	  #print ":".join("{:c}".format(c) for c in responsepacket)
+		responsepacket = bytearray(response[0])
+		host = response[1]	
+		mac = responsepacket[0x3a:0x40]	
+		mac = mac[::-1]  ##Flip correct
+		devtype = responsepacket[0x34] | responsepacket[0x35] << 8
+		name = responsepacket[0x40:].split(b'\x00')[0].decode('utf-8')
+		if not name:
+			name = mac
+		cloud = bool(responsepacket[-1])
+		cs.close()
+		return gendevice(devtype, host, mac,name=name,cloud=cloud)
+	else:
+		while (time.time() - starttime) < timeout:
+			cs.settimeout(timeout - (time.time() - starttime))
+			try:
+				response = cs.recvfrom(1024)
+			except socket.timeout:
+				return devices
+			responsepacket = bytearray(response[0])
 
-	  host = response[1]
-	  devtype = responsepacket[0x34] | responsepacket[0x35] << 8
-	  mac = responsepacket[0x3a:0x40]
-	  mac = mac[::-1] ##flip Correct
-	  name = responsepacket[0x40:].split(b'\x00')[0].decode('utf-8')      
-	  if not name:
-		name = mac		
-	  
-	  cloud = bool(responsepacket[-1])      
-	  dev = gendevice(devtype, host, mac,name=name,cloud=cloud)
-	  devices.append(dev)
-	  
+			#print ":".join("{:02x}".format(c) for c in responsepacket)
+			#print ":".join("{:c}".format(c) for c in responsepacket)
+
+			host = response[1]
+			devtype = responsepacket[0x34] | responsepacket[0x35] << 8
+			mac = responsepacket[0x3a:0x40]
+			mac = mac[::-1] ##flip Correct
+			name = responsepacket[0x40:].split(b'\x00')[0].decode('utf-8')
+			##Make sure there is some name
+			if not name:
+				name = mac		
+				
+			cloud = bool(responsepacket[-1])
+			dev = gendevice(devtype, host, mac,name=name,cloud=cloud)
+			devices.append(dev)
+
 	cs.close()
 	return devices
 
 
 class device:
-  def __init__(self, host, mac, timeout=10,name=None,cloud=None,devtype=None,update_interval=0):
-	self.host = host
-	self.mac = mac
-	self.name = name    
-	self.cloud = cloud
-	self.timeout = timeout
-	self.devtype = devtype
-	self.count = random.randrange(0xffff)
-	self.key = bytearray([0x09, 0x76, 0x28, 0x34, 0x3f, 0xe9, 0x9e, 0x23, 0x76, 0x5c, 0x15, 0x13, 0xac, 0xcf, 0x8b, 0x02])
-	self.iv = bytearray([0x56, 0x2e, 0x17, 0x99, 0x6d, 0x09, 0x3d, 0x28, 0xdd, 0xb3, 0xba, 0x69, 0x5a, 0x2e, 0x6f, 0x58])
-	self.id = bytearray([0, 0, 0, 0])
-	self.cs = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-	self.cs.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-	self.cs.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-	self.cs.bind(('',0))
-	self.type = "Unknown"
-	self.lock = threading.Lock()
-	self.update_interval = update_interval
+	def __init__(self, host, mac, timeout=10,name=None,cloud=None,devtype=None,update_interval=0):
+		self.host = host
+		self.mac = mac
+		self.name = name    
+		self.cloud = cloud
+		self.timeout = timeout
+		self.devtype = devtype
+		self.count = random.randrange(0xffff)
+		self.key = bytearray([0x09, 0x76, 0x28, 0x34, 0x3f, 0xe9, 0x9e, 0x23, 0x76, 0x5c, 0x15, 0x13, 0xac, 0xcf, 0x8b, 0x02])
+		self.iv = bytearray([0x56, 0x2e, 0x17, 0x99, 0x6d, 0x09, 0x3d, 0x28, 0xdd, 0xb3, 0xba, 0x69, 0x5a, 0x2e, 0x6f, 0x58])
+		self.id = bytearray([0, 0, 0, 0])
+		self.cs = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+		self.cs.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+		self.cs.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+		self.cs.bind(('',0))
+		self.type = "Unknown"
+		self.lock = threading.Lock()
+		self.update_interval = update_interval
 
-  def auth(self):
-	payload = bytearray(0x50)
-	payload[0x04] = 0x31
-	payload[0x05] = 0x31
-	payload[0x06] = 0x31
-	payload[0x07] = 0x31
-	payload[0x08] = 0x31
-	payload[0x09] = 0x31
-	payload[0x0a] = 0x31
-	payload[0x0b] = 0x31
-	payload[0x0c] = 0x31
-	payload[0x0d] = 0x31
-	payload[0x0e] = 0x31
-	payload[0x0f] = 0x31
-	payload[0x10] = 0x31
-	payload[0x11] = 0x31
-	payload[0x12] = 0x31
-	payload[0x1e] = 0x01
-	payload[0x2d] = 0x01
-	payload[0x30] = ord('T')
-	payload[0x31] = ord('e')
-	payload[0x32] = ord('s')
-	payload[0x33] = ord('t')
-	payload[0x34] = ord(' ')
-	payload[0x35] = ord(' ')
-	payload[0x36] = ord('1')
+	def auth(self):
+		payload = bytearray(0x50)
+		payload[0x04] = 0x31
+		payload[0x05] = 0x31
+		payload[0x06] = 0x31
+		payload[0x07] = 0x31
+		payload[0x08] = 0x31
+		payload[0x09] = 0x31
+		payload[0x0a] = 0x31
+		payload[0x0b] = 0x31
+		payload[0x0c] = 0x31
+		payload[0x0d] = 0x31
+		payload[0x0e] = 0x31
+		payload[0x0f] = 0x31
+		payload[0x10] = 0x31
+		payload[0x11] = 0x31
+		payload[0x12] = 0x31
+		payload[0x1e] = 0x01
+		payload[0x2d] = 0x01
+		payload[0x30] = ord('T')
+		payload[0x31] = ord('e')
+		payload[0x32] = ord('s')
+		payload[0x33] = ord('t')
+		payload[0x34] = ord(' ')
+		payload[0x35] = ord(' ')
+		payload[0x36] = ord('1')
 
 	
-	response = self.send_packet(0x65, payload)    
+		response = self.send_packet(0x65, payload)    
 
-	enc_payload = response[0x38:]
+		enc_payload = response[0x38:]
 
-	aes = AES.new(bytes(self.key), AES.MODE_CBC, bytes(self.iv))
-	payload = aes.decrypt(bytes(enc_payload))
-	
-	if not payload:
-	 return False
+		aes = AES.new(bytes(self.key), AES.MODE_CBC, bytes(self.iv))
+		payload = aes.decrypt(bytes(enc_payload))
+		
+		if not payload:
+			return False
 
-	key = payload[0x04:0x14]
-	if len(key) % 16 != 0:
-	 return False
+		key = payload[0x04:0x14]
+		if len(key) % 16 != 0:
+			return False
 
-	self.id = payload[0x00:0x04]
-	self.key = key
-	return True
+		self.id = payload[0x00:0x04]
+		self.key = key
+		return True
 
-  def get_type(self):
-	return self.type
+	def get_type(self):
+		return self.type
 
-  def send_packet(self, command, payload):
-	self.count = (self.count + 1) & 0xffff
-	packet = bytearray(0x38)
-	packet[0x00] = 0x5a
-	packet[0x01] = 0xa5
-	packet[0x02] = 0xaa
-	packet[0x03] = 0x55
-	packet[0x04] = 0x5a
-	packet[0x05] = 0xa5
-	packet[0x06] = 0xaa
-	packet[0x07] = 0x55
-	packet[0x24] = 0x2a #==> Type
-	packet[0x25] = 0x4e #==> Type
-	packet[0x26] = command
-	packet[0x28] = self.count & 0xff
-	packet[0x29] = self.count >> 8
-	packet[0x2a] = self.mac[0]
-	packet[0x2b] = self.mac[1]
-	packet[0x2c] = self.mac[2]
-	packet[0x2d] = self.mac[3]
-	packet[0x2e] = self.mac[4]
-	packet[0x2f] = self.mac[5]
-	packet[0x30] = self.id[0]
-	packet[0x31] = self.id[1]
-	packet[0x32] = self.id[2]
-	packet[0x33] = self.id[3]
+	def	 send_packet(self, command, payload):
+		self.count = (self.count + 1) & 0xffff
+		packet = bytearray(0x38)
+		packet[0x00] = 0x5a
+		packet[0x01] = 0xa5
+		packet[0x02] = 0xaa
+		packet[0x03] = 0x55
+		packet[0x04] = 0x5a
+		packet[0x05] = 0xa5
+		packet[0x06] = 0xaa
+		packet[0x07] = 0x55
+		packet[0x24] = 0x2a #==> Type
+		packet[0x25] = 0x4e #==> Type
+		packet[0x26] = command
+		packet[0x28] = self.count & 0xff
+		packet[0x29] = self.count >> 8
+		packet[0x2a] = self.mac[0]
+		packet[0x2b] = self.mac[1]
+		packet[0x2c] = self.mac[2]
+		packet[0x2d] = self.mac[3]
+		packet[0x2e] = self.mac[4]
+		packet[0x2f] = self.mac[5]
+		packet[0x30] = self.id[0]
+		packet[0x31] = self.id[1]
+		packet[0x32] = self.id[2]
+		packet[0x33] = self.id[3]
 
-	checksum = 0xbeaf
-	for i in range(len(payload)):
-	  checksum += payload[i]
-	  checksum = checksum & 0xffff
+		checksum = 0xbeaf
+		for i in range(len(payload)):
+			checksum += payload[i]
+			checksum = checksum & 0xffff
 
-	aes = AES.new(bytes(self.key), AES.MODE_CBC, bytes(self.iv))
-	payload = aes.encrypt(bytes(payload))
+		aes = AES.new(bytes(self.key), AES.MODE_CBC, bytes(self.iv))
+		payload = aes.encrypt(bytes(payload))
 
-	packet[0x34] = checksum & 0xff
-	packet[0x35] = checksum >> 8
+		packet[0x34] = checksum & 0xff
+		packet[0x35] = checksum >> 8
 
-	for i in range(len(payload)):
-	  packet.append(payload[i])
+		for i in range(len(payload)):
+		 	packet.append(payload[i])
 
-	checksum = 0xbeaf
-	for i in range(len(packet)):
-	  checksum += packet[i]
-	  checksum = checksum & 0xffff
-	packet[0x20] = checksum & 0xff
-	packet[0x21] = checksum >> 8
+		checksum = 0xbeaf
+		for i in range(len(packet)):
+			checksum += packet[i]
+			checksum = checksum & 0xffff
+		packet[0x20] = checksum & 0xff
+		packet[0x21] = checksum >> 8
 
-	#print 'Sending Packet:\n'+''.join(format(x, '02x') for x in packet)+"\n"
-	starttime = time.time()
-	with self.lock:
-	  while True:
-		try:
-		  self.cs.sendto(packet, self.host)
-		  self.cs.settimeout(1)
-		  response = self.cs.recvfrom(1024)
+		#print 'Sending Packet:\n'+''.join(format(x, '02x') for x in packet)+"\n"
+		starttime = time.time()
+		with self.lock:
+			while True:
+				try:
+					self.cs.sendto(packet, self.host)
+					self.cs.settimeout(1)
+					response = self.cs.recvfrom(1024)
 
-		  break
-		except socket.timeout:
-		  if (time.time() - starttime) < self.timeout:
-			pass
-		  raise ConnectTimeout(200,self.host)
-	return bytearray(response[0])
+					break
+				except socket.timeout:
+					if (time.time() - starttime) < self.timeout:
+						pass
+					raise ConnectTimeout(200,self.host)
+		return bytearray(response[0])
 
 
  
@@ -288,7 +289,7 @@ class ac_db(device):
 			AUTO 	= 	0b00000101  
 			NONE 	=	0b00000000
 		
-		 		
+				 
 		class MODE:
 			COOLING	=	0b00000001
 			DRY		=	0b00000010
@@ -464,7 +465,7 @@ class ac_db(device):
 			self.status['power'] =  self.STATIC.ONOFF.ON
 			self.set_ac_status()
 			return self.make_nice_status(self.status)
- 	 
+	  
 		elif status.lower() == 'auto':
 			self.status['mode'] = self.STATIC.MODE.AUTO
 			self.status['power'] =  self.STATIC.ONOFF.ON
@@ -504,7 +505,7 @@ class ac_db(device):
 			self.status['power'] =  self.STATIC.ONOFF.ON
 			self.set_ac_status()
 			return self.make_nice_status(self.status)
- 	 
+	  
 		elif status.lower() == 'auto':
 			self.status['mode'] = self.STATIC.MODE.AUTO
 			self.status['power'] =  self.STATIC.ONOFF.ON
@@ -687,7 +688,7 @@ class ac_db(device):
 			status_nice['mode_homeassistant'] = "fan_only"
 		else:
 			status_nice['mode_homeassistant'] = "Error"
- 		
+		 
 		##Make fanspeed logic
 		status_nice['fanspeed']  = self.get_key(self.STATIC.FAN.__dict__,status['fanspeed'])
 		status_nice['fanspeed_homeassistant']  = self.get_key(self.STATIC.FAN.__dict__,status['fanspeed']).title()

@@ -101,8 +101,8 @@ def init_logging(level,log_file_path):
 		# Init logging
 		logging.basicConfig(
 			filename=log_file_path,
-    		level=level,
-    		format="%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s",
+			level=level,
+			format="%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s",
 		 
 		)
 		
@@ -205,7 +205,7 @@ def start():
 		devices = {}			 
 		
 				
-        # Argument parsing
+		# Argument parsing
 		parser = argparse.ArgumentParser(		
 			description='Aircon To MQTT v%s : Mqtt publisher of Duhnham Bush on the Pi.' % softwareversion			
 		)
