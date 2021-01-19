@@ -555,7 +555,7 @@ class ac_db(device):
 			self.logger.debug ("AcInfo: " + ' '.join(format(x, '08b') for x in response_payload[9:] )  )	
 
 		  
-			if len(response_payload) < 40: ##Hack for some invalid packets. should get proper length at some point.
+			if len(response_payload) < 40: ##Hack for some invalid packets. should get proper length at some point.  #54
 				self.logger.debug ("AcInfo: Invalid, seems to short?")	
 				return 0
 
