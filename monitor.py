@@ -138,8 +138,8 @@ def check_if_running():
 			contents = contents.split(',')
 			
 			##Stale, so go ahead
-			if (float(contents[1])+ pid_stale_time) < time.time():
-				logger.info("Pid is stale, so we'll just overwrite it go on")								
+			if (1 in contents and (float(contents[1])+ pid_stale_time) < time.time()):
+					logger.info("Pid is stale, so we'll just overwrite it go on")								
 				
 			else:
 				logger.debug("Pid is still valid, so exit")												
@@ -357,7 +357,7 @@ def start():
 			
 		except Exception as e:								
 			
-			logger.error(e)
+			logger.debug(e)
 				
 		finally:
 			##cleanup
