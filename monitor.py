@@ -8,6 +8,7 @@ import argparse
 import time
 import broadlink_ac_mqtt.AcToMqtt as AcToMqtt
 import broadlink_ac_mqtt.classes.broadlink.ac_db as ac_db_version
+import broadlink_ac_mqtt.classes.broadlink.ac_db as ac_db2
 import signal
 
 logger = logging.getLogger(__name__)
@@ -330,9 +331,12 @@ def start():
 			else:
 				devices = AC.make_device_objects(config['devices'])
 			
+			
 			if args.dumphaconfig:
 				AC.dump_homeassistant_config_from_devices(devices)			
 				sys.exit()
+			
+			
 				
  			##Publish mqtt auto discovery if topic  set
 			if config["mqtt_auto_discovery_topic"]:
@@ -349,9 +353,12 @@ def start():
 			
 			running = False
 		except KeyboardInterrupt:
-			logging.debug("User Keyboard interuped")
-		except Exception as e:					
-			print (e)			
+			logging.debug("User Keyboard interuped")	
+			
+		except Exception as e:								
+			
+			logger.error(e)
+				
 		finally:
 			##cleanup
 			stop()

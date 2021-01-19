@@ -13,12 +13,13 @@ import struct
 version = "1.1.1"
 
 def gendevice(devtype , host, mac,name=None, cloud=None,update_interval = 0):
-  #print format(devtype,'02x')
-  ##We only care about 1 device type...
-  if devtype == 0x4E2a: # Danham Bush
-    return ac_db(host=host, mac=mac,name=name, cloud=cloud,devtype= devtype,update_interval = 0)
-  else:
-    return device(host=host, mac=mac,devtype =devtype,update_interval = update_interval)
+	#print format(devtype,'02x')
+	##We only care about 1 device type...  
+  	if devtype == 0x4E2a: # Danham Bush
+		return ac_db(host=host, mac=mac,name=name, cloud=cloud,devtype= devtype,update_interval = 0)
+	else:
+		return device(host=host, mac=mac,devtype =devtype,update_interval = update_interval)
+  
 
 def discover(timeout=None, local_ip_address=None):
   if local_ip_address is None:
@@ -163,13 +164,14 @@ class device:
     payload[0x35] = ord(' ')
     payload[0x36] = ord('1')
 
-    response = self.send_packet(0x65, payload)
+    
+    response = self.send_packet(0x65, payload)    
 
     enc_payload = response[0x38:]
 
     aes = AES.new(bytes(self.key), AES.MODE_CBC, bytes(self.iv))
     payload = aes.decrypt(bytes(enc_payload))
-
+    
     if not payload:
      return False
 
@@ -245,7 +247,7 @@ class device:
         except socket.timeout:
           if (time.time() - starttime) < self.timeout:
             pass
-          raise
+          raise ConnectTimeout(200,self.host)
     return bytearray(response[0])
 
 
@@ -558,7 +560,12 @@ class ac_db(device):
 				return 0
 
 			##Its only the last 5 bits?		  
-			self.status['ambient_temp'] = response_payload[15] & 0b00011111		
+			ambient_temp = response_payload[15] & 0b00011111
+			self.logger.debug("Ambient Temp Decimal: %s" % float(response_payload[31] & 0b00011111) ) ## @Anonym-tsk
+
+			if ambient_temp:
+				self.status['ambient_temp'] = ambient_temp
+
 		
 		  
 			return self.make_nice_status(self.status)
@@ -811,4 +818,10 @@ class ac_db(device):
 
 		return "done"
 
- 
+class ConnectError(Exception):
+	"""Base error class"""
+	pass
+
+class ConnectTimeout(ConnectError):
+	"""Connection Timeout"""
+	pass

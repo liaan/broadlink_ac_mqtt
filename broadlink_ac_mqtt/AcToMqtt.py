@@ -54,14 +54,15 @@ class AcToMqtt:
 	
 	def make_device_objects(self,device_list = None):
 		device_objects = {}
+		
 		if  device_list == [] or device_list == None:
 			error_msg = " Cannot make device objects, empty list given"
 			logger.error(error_msg)			
 			sys.exit()
-			
+		
 		for device in device_list:			
 			device_objects[device['mac']] = broadlink.gendevice(devtype=0x4E2a, host=(device['ip'],device['port']),mac = bytearray.fromhex(device['mac']), name=device['name'],update_interval = self.config['update_interval'])		
-					
+			
 		return device_objects
 
 	def stop(self):
@@ -72,7 +73,7 @@ class AcToMqtt:
 			""
 				
 	def start (self,config, devices = None):
-			
+		
 		self.device_objects = devices		
 		self.config = config
 		
@@ -98,6 +99,7 @@ class AcToMqtt:
 						#print "timeout done"					
 			
 				##Get the status, the global update interval is used as well to reduce requests to aircons as they slow
+				
 				status = device.get_ac_status()						
 				#print status
 				if status:
@@ -166,6 +168,7 @@ class AcToMqtt:
 				,"max_temp":32.0
 				,"min_temp":16.0
 				,"precision": 0.5
+				,"temp_step": 0.5 ## @Anonym-tsk
 				,"unique_id": device.status["macaddress"]
 				,"device" : {"ids":device.status["macaddress"],"name":str(name.decode("utf-8")),"model":'Aircon',"mf":"Broadlink","sw":broadlink.version}				
 				,"pl_avail":"online"
