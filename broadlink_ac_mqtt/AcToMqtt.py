@@ -82,6 +82,8 @@ class AcToMqtt:
 			print ("No devices defined")
 			logger.error("No Devices defined, either enable discovery or add them to config")
 			return
+		else:
+			logger.debug ("Following devices configured %s" % repr(devices))
 		
 		##we are alive ##Update PID file			
 		try:
@@ -90,6 +92,7 @@ class AcToMqtt:
 				device = devices[key]
 				##Just check status on every update interval
 				if key in self.last_update:
+					logger.debug("Checking %s for timeout" % key)
 					if (self.last_update[key] + self.config["update_interval"]) > time.time():
 						logger.debug("Timeout %s not done, so lets wait a abit : %s : %s" %(self.config["update_interval"],self.last_update[key] + self.config["update_interval"],time.time()))				
 						time.sleep(0.5)
@@ -112,7 +115,7 @@ class AcToMqtt:
 				
 		except Exception as e:					
 			logger.critical(e)	
-			##Something went wrong, so just exit and let system restart	
+			##Something went wrong..... 
 			
 
 		return 1
