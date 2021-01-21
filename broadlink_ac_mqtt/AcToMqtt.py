@@ -8,6 +8,7 @@ import yaml
 import paho.mqtt.client as mqtt
 import tempfile
 import json
+import traceback
 
 sys.path.insert(1, os.path.join(os.path.dirname(os.path.realpath(__file__)),'classes','broadlink'))
 import ac_db as broadlink
@@ -115,7 +116,7 @@ class AcToMqtt:
 				
 		except Exception as e:					
 			logger.critical(e)	
-			
+			logger.debug(traceback.format_exc())
 			##Something went wrong..... 
 			
 

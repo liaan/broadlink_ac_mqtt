@@ -357,9 +357,8 @@ def start():
 			logging.debug("User Keyboard interuped")	
 			
 		except Exception as e:								
-			logger.debug("error")
-			logger.debug(traceback.format_exc())
-			logger.debug("Error on line {}" . format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
+			
+			logger.debug(traceback.format_exc())			
 			logger.error(e)
 			
 				
