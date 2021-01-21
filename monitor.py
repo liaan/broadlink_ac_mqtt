@@ -10,6 +10,7 @@ import broadlink_ac_mqtt.AcToMqtt as AcToMqtt
 import broadlink_ac_mqtt.classes.broadlink.ac_db as ac_db_version
 import broadlink_ac_mqtt.classes.broadlink.ac_db as ac_db2
 import signal
+import traceback
 
 logger = logging.getLogger(__name__)
 AC = None
@@ -356,8 +357,11 @@ def start():
 			logging.debug("User Keyboard interuped")	
 			
 		except Exception as e:								
-			
+			logger.debug("error")
+			logger.debug(traceback.format_exc())
+			logger.debug("Error on line {}" . format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
 			logger.error(e)
+			
 				
 		finally:
 			##cleanup
