@@ -337,12 +337,17 @@ class ac_db(device):
 
 	def get_ac_status(self,force_update = False):
 		
+		
+		##Check if the status is up to date to reduce timeout issues. Can be overwritten by force_update
+		self.logger.debug("Last update was: %s"%self.status['lastupdate'] )
+
 		if (force_update == False and (self.status['lastupdate'] + self.update_interval) > time.time()) :
 			return self.make_nice_status(self.status)
 			
 		##Get AC info(also populates the current temp)
+		self.logger.debug("Getting AC Info")
 		self.get_ac_info()
-		##Get the current status
+		##Get the current status ... get_ac_states does make_nice_status in return.
 		status = self.get_ac_states(True)
 		return status
 		
@@ -562,15 +567,17 @@ class ac_db(device):
 
 			##Its only the last 5 bits?		  
 			ambient_temp = response_payload[15] & 0b00011111
+			
 			self.logger.debug("Ambient Temp Decimal: %s" % float(response_payload[31] & 0b00011111) ) ## @Anonym-tsk
 
 			if ambient_temp:
 				self.status['ambient_temp'] = ambient_temp
-
 		
 		  
 			return self.make_nice_status(self.status)
-		else:
+		else:			
+			self.logger.debug("Invalid packet received Errorcode %s" % err)
+			self.logger.debug ("Failed Raw Response: " + ' '.join(format(x, '08b') for x in response )  )	
 			return 0
 		  
 		  
@@ -579,10 +586,12 @@ class ac_db(device):
 	##
 	def get_ac_states(self,force_update = False):    
 		GET_STATES =  bytearray.fromhex("0C00BB0006800000020011012B7E0000")  ##From app queryAuxinfo:bb0006800000020011012b7e
-		
-		##Check if the status is up to date to reduce timeout issues. Can be overwritten by force_update
+				
+		##Check if the status is up to date to reduce timeout issues. Can be overwritten by force_update			
+		self.logger.debug("Last update was: %s"%self.status['lastupdate'] )
 		if (force_update == False and (self.status['lastupdate'] + self.update_interval) > time.time()) :
 			return self.make_nice_status(self.status)
+		
 		
 		response = self.send_packet(0x6a, GET_STATES)	
 		##Check response, the checksums should be 0

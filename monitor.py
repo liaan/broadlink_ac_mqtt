@@ -130,8 +130,10 @@ def touch_pid_file():
 def check_if_running():
 	
 	##Check if there is pid, if there is, then check if valid or stale .. probably should add process id for race conditions but damn, this is a simple scripte.....
+	logger.debug("Checking if already running")
+	
 	if os.path.isfile(pidfile):	
-
+		
 		logger.debug("%s already exists, checking if stale" % pidfile)
 		
 		##Check if stale
@@ -201,8 +203,6 @@ def start():
 	
 	##Handle signal
 	init_signal()
-	##Make sure not already running		
-	stop_if_already_running()		
 	
 	##Just some defaults
 	##Defaults		
@@ -266,7 +266,7 @@ def start():
 			config_file_path = data_dir+'/config.yml'
 		
 	
-	##Config File
+	##LogFile
 	if args.logfile:			
 		log_file_path = args.config			 
 	else:			
@@ -282,6 +282,8 @@ def start():
 	
 	##Apply the config, then if arguments, override the config values with args
 	config = read_config(config_file_path)
+
+	
 	
 	##Print verions
 	if args.version:
@@ -318,11 +320,14 @@ def start():
 	##Deamon Mode
 	if args.background:
 		config["daemon_mode"] = True			 
-	
+		
 	##mmmm.. this looks dodgy.. but i'm not python expert 			
 	AC = AcToMqtt.AcToMqtt(config)
 	
 	try:				
+		##Make sure not already running		
+		stop_if_already_running()		
+	
 		
 		logging.info("Starting Monitor...")
 		# Start and run the mainloop
