@@ -328,6 +328,7 @@ class ac_db(device):
 		##Populate array with latest data
 		self.logger.debug("Authenticating")
 		if self.auth() == False:
+			self.logger.critical("Authentication Failed to AC")		
 			return 
 		
 		self.logger.debug("Getting current details in init")		
