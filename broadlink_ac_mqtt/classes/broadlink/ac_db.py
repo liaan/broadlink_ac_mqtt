@@ -347,8 +347,11 @@ class ac_db(device):
 		##Get AC info(also populates the current temp)
 		self.logger.debug("Getting AC Info")
 		self.get_ac_info()
+		self.logger.debug("AC Info Retrieved")
 		##Get the current status ... get_ac_states does make_nice_status in return.
+		self.logger.debug("Getting AC States")
 		status = self.get_ac_states(True)
+		self.logger.debug("AC States retrieved")
 		return status
 		
 		
