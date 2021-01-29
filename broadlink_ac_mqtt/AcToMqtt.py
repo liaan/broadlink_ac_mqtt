@@ -14,6 +14,8 @@ sys.path.insert(1, os.path.join(os.path.dirname(os.path.realpath(__file__)),'cla
 import ac_db as broadlink
 
 
+
+
 logger = logging.getLogger(__name__)
 
 config  = {}	
@@ -30,7 +32,15 @@ class AcToMqtt:
 	def __init__(self,config):
 		self.config = config
 		"" 
+	def test(self,config):
+		
+		
+		for device in config['devices']:
 			
+			device_bla = broadlink.gendevice(devtype=0xFFFFFFF, host=(device['ip'],device['port']),mac = bytearray.fromhex(device['mac']), name=device['name'])		
+			status = device_bla.set_temperature(32)
+			print status
+
 	
 	def discover(self):		 
 		##Go discovery

@@ -237,6 +237,7 @@ def start():
 	parser.add_argument("-dir", "--data_dir", help="Data Folder -- Default to folder script is located", default=False)
 	parser.add_argument("-c", "--config", help="Config file path -- Default to folder script is located + 'config.yml'", default=False)
 	parser.add_argument("-l", "--logfile", help="Logfile path -- Default to logs folder script is located", default=False)
+	parser.add_argument("-T", "--test",help="send test set temperature packet, for testing only",action="store_true",default=False)
 			
 	##Parse args
 	args = parser.parse_args()
@@ -323,6 +324,10 @@ def start():
 		
 	##mmmm.. this looks dodgy.. but i'm not python expert 			
 	AC = AcToMqtt.AcToMqtt(config)
+	##Just do a test
+	if args.test:			
+			AC.test(config)
+			sys.exit()
 	
 	try:				
 		##Make sure not already running		
@@ -345,6 +350,7 @@ def start():
 		if args.dumphaconfig:
 			AC.dump_homeassistant_config_from_devices(devices)			
 			sys.exit()
+
 		
 		
 			
