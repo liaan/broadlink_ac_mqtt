@@ -11,7 +11,7 @@ import json
 import traceback
 
 sys.path.insert(1, os.path.join(os.path.dirname(os.path.realpath(__file__)),'classes','broadlink'))
-import ac_db as broadlink
+import broadlink_ac_mqtt.classes.broadlink.ac_db as broadlink
 
 
 

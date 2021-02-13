@@ -309,7 +309,7 @@ class ac_db(device):
 	 
 		##Get AC info(also populates the current temp)
 		self.logger.debug("Getting AC Info")
-		self.get_ac_info()
+		status = self.get_ac_info()
 		self.logger.debug("AC Info Retrieved")
 	 
 		return status
