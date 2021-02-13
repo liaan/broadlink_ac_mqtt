@@ -39,7 +39,7 @@ class AcToMqtt:
 			
 			device_bla = broadlink.gendevice(devtype=0xFFFFFFF, host=(device['ip'],device['port']),mac = bytearray.fromhex(device['mac']), name=device['name'])		
 			status = device_bla.set_temperature(32)
-			print status
+			#print status
 
 	
 	def discover(self):		 

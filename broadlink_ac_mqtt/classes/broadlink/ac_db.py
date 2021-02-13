@@ -998,7 +998,7 @@ class ac_db_debug(device):
 		self.logger.debug("Start set_ac_status")
 		#packet = bytearray(32)
 		#10111011 00000000 00000110 10000000 00000000 00000000 00001111 00000000 00000001 9 00000001 10 01000111 11 00101000  12 00100000 13 10100000 14 00000000 15 00100000  16 00000000 17 00000000 18 00100000 19 00000000 20 00010000 21 00000000 22 00000101 10010001 10010101
-		print "setting something"
+		#print "setting something"
 		if self.status['temp'] < 16:			
 			temperature = 16-8
 			temperature_05 = 0
@@ -1020,7 +1020,7 @@ class ac_db_debug(device):
 			else:
 				temperature_05 = 1	
 				temperature = int(self.status['temp'] -8)
-		print temperature
+		#print temperature
 		
 		payload  = bytearray(23)
 		payload[0] = 0xbb
@@ -1147,7 +1147,7 @@ class ac_db_debug(device):
 		packet[0x20] = checksum & 0xff
 		packet[0x21] = checksum >> 8
 
-		print 'Sending Packet:\n'+''.join(format(x, '02x') for x in packet)+"\n"
+		#print 'Sending Packet:\n'+''.join(format(x, '02x') for x in packet)+"\n"
 		starttime = time.time()
 
 		with self.lock:
@@ -1156,12 +1156,12 @@ class ac_db_debug(device):
 					self.cs.sendto(packet, self.host)
 					self.cs.settimeout(1)
 					response = self.cs.recvfrom(1024)
-					print response
+					#print response
 					break
 				except socket.timeout:
 					if (time.time() - starttime) < self.timeout:
 						pass
-					print "timedout"
+					#print "timedout"
 					raise ConnectTimeout(200,self.host)
 		return bytearray(response[0])	
 
