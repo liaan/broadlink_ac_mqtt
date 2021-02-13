@@ -12,6 +12,8 @@ import broadlink_ac_mqtt.classes.broadlink.ac_db as ac_db_version
 import signal
 import traceback
 
+import platform
+
 logger = logging.getLogger(__name__)
 AC = None
 softwareversion = "1.0.18"
@@ -180,21 +182,27 @@ def restart(signalNumber = 0, frame = 0):
 	""
 
 def init_signal():
-	#signal.signal(signal.SIGHUP, restart)
+
+	# Patform agnostic signals...
 	signal.signal(signal.SIGINT, receiveSignal)
-	#signal.signal(signal.SIGQUIT, receiveSignal)
 	signal.signal(signal.SIGILL, receiveSignal)
-	#signal.signal(signal.SIGTRAP, receiveSignal)
 	signal.signal(signal.SIGABRT, receiveSignal)
-	#signal.signal(signal.SIGBUS, receiveSignal)
 	signal.signal(signal.SIGFPE, receiveSignal)
-	#signal.signal(signal.SIGKILL, receiveSignal)
-	#signal.signal(signal.SIGUSR1, receiveSignal)
 	signal.signal(signal.SIGSEGV, receiveSignal)
-	#signal.signal(signal.SIGUSR2, receiveSignal)
-	#signal.signal(signal.SIGPIPE, receiveSignal)
-	#signal.signal(signal.SIGALRM, receiveSignal)
 	signal.signal(signal.SIGTERM, stop)
+
+	# Linux specific signals...
+
+	if platform.system() != "Windows":
+		signal.signal(signal.SIGHUP, restart)
+		signal.signal(signal.SIGQUIT, receiveSignal)
+		signal.signal(signal.SIGTRAP, receiveSignal)
+		signal.signal(signal.SIGBUS, receiveSignal)
+		signal.signal(signal.SIGKILL, receiveSignal)
+		signal.signal(signal.SIGUSR1, receiveSignal)
+		signal.signal(signal.SIGUSR2, receiveSignal)
+		signal.signal(signal.SIGPIPE, receiveSignal)
+		signal.signal(signal.SIGALRM, receiveSignal)
 
 
 #################  Main startup ####################
