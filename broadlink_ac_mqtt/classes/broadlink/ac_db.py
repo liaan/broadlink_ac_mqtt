@@ -1147,7 +1147,7 @@ class ac_db_debug(device):
 		packet[0x20] = checksum & 0xff
 		packet[0x21] = checksum >> 8
 
-		print 'Sending Packet:\n'+''.join(format(x, '02x') for x in packet)+"\n"
+		#print 'Sending Packet:\n'+''.join(format(x, '02x') for x in packet)+"\n"
 		starttime = time.time()
 
 		with self.lock:
@@ -1156,12 +1156,12 @@ class ac_db_debug(device):
 					self.cs.sendto(packet, self.host)
 					self.cs.settimeout(1)
 					response = self.cs.recvfrom(1024)
-					print response
+					#print response
 					break
 				except socket.timeout:
 					if (time.time() - starttime) < self.timeout:
 						pass
-					print "timedout"
+					#print "timedout"
 					raise ConnectTimeout(200,self.host)
 		return bytearray(response[0])	
 
