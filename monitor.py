@@ -9,6 +9,8 @@ import time
 import broadlink_ac_mqtt.AcToMqtt as AcToMqtt
 import broadlink_ac_mqtt.classes.broadlink.ac_db as ac_db_version
 
+from broadlink_ac_mqtt.classes.MQTTLogSink.MQTTLog import MQTTHandler as MQTTHandler
+
 import signal
 import traceback
 
@@ -97,7 +99,7 @@ def stop_if_already_running():
 	if(check_if_running()):		
 		sys.exit()
 
-def init_logging(level,log_file_path):
+def init_logging(level,log_file_path,hostname,port,topic):
 		
 		# Init logging
 		logging.basicConfig(
@@ -115,6 +117,11 @@ def init_logging(level,log_file_path):
 		# tell the handler to use this format
 		console.setFormatter(formatter)
 		logging.getLogger('').addHandler(console)
+
+		myHandler = MQTTHandler(hostname, topic, port=port)
+		myHandler.setLevel(logging.DEBUG)
+		myHandler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s: %(message)s'))
+		logger.addHandler(myHandler)
 
 def touch_pid_file():
 		global pid_last_update
@@ -267,18 +274,6 @@ def start():
 			config_file_path = data_dir+'/config.yml'
 		
 	
-	##LogFile
-	if args.logfile:			
-		log_file_path = args.config			 
-	else:			
-		log_file_path = os.path.dirname(os.path.realpath(__file__))+'/log/out.log'
-		
-	log_level = logging.DEBUG if args.debug else logging.INFO
-	init_logging(log_level,log_file_path)
-	
-	logger.debug("%s v%s is starting up" % (__file__, softwareversion))
-	logLevel = {0: 'NOTSET', 10: 'DEBUG', 20: 'INFO', 30: 'WARNING', 40: 'ERROR'}
-	logger.debug('Loglevel set to ' + logLevel[logging.getLogger().getEffectiveLevel()])
 	
 	
 	##Apply the config, then if arguments, override the config values with args
@@ -321,6 +316,22 @@ def start():
 	##Deamon Mode
 	if args.background:
 		config["daemon_mode"] = True			 
+
+	##LogFile
+	if args.logfile:			
+		log_file_path = args.config			 
+	else:			
+		log_file_path = os.path.dirname(os.path.realpath(__file__))+'/log/out.log'
+		
+	#log_level = logging.DEBUG if args.debug else logging.INFO
+	log_level = logging.DEBUG
+
+	init_logging(log_level,log_file_path,config["mqtt_host"],config["mqtt_port"],config["mqtt_topic_prefix"]+"log")
+	
+	logger.debug("%s v%s is starting up" % (__file__, softwareversion))
+	logLevel = {0: 'NOTSET', 10: 'DEBUG', 20: 'INFO', 30: 'WARNING', 40: 'ERROR'}
+	logger.debug('Loglevel set to ' + logLevel[logging.getLogger().getEffectiveLevel()])
+
 		
 	##mmmm.. this looks dodgy.. but i'm not python expert 			
 	AC = AcToMqtt.AcToMqtt(config)
