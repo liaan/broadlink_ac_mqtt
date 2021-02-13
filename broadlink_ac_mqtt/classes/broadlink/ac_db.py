@@ -10,7 +10,7 @@ import threading
 import parser
 import struct
 
-version = "1.1.2"
+version = "1.1.3"
 
 def gendevice(devtype , host, mac,name=None, cloud=None,update_interval = 0):
 	#print format(devtype,'02x')
@@ -563,7 +563,7 @@ class ac_db(device):
 			aes = AES.new(bytes(self.key), AES.MODE_CBC, bytes(self.iv))
 
 			# response = bytearray.fromhex("5aa5aa555aa5aa55000000000000000000000000000000000000000000000000c6d000002a4e6a0055b9af41a70d43b401000000b9c00000aeaac104468cf91b485f38c67f7bf57f");
-			response = bytearray.fromhex("5aa5aa555aa5aa5547006f008d9904312c003e00000000003133a84d00400000d8d500002a4e6a0070a1b88c08b043a001000000b9c0000038821c66e3b38a5afe79dcb145e215d7")
+			#response = bytearray.fromhex("5aa5aa555aa5aa5547006f008d9904312c003e00000000003133a84d00400000d8d500002a4e6a0070a1b88c08b043a001000000b9c0000038821c66e3b38a5afe79dcb145e215d7")
 		
 			response_payload = aes.decrypt(bytes(response[0x38:]))
 			response_payload = bytearray(response_payload)
@@ -1047,7 +1047,7 @@ class ac_db_debug(device):
 		payload[21] = 0b00000000  
 		payload[22] = 0b00000000 
 		
-		print ("Payload:"+ ''.join(format(x, '02x') for x in payload))
+		#print ("Payload:"+ ''.join(format(x, '02x') for x in payload))
 		
 		# first byte is length, Then placeholder then payload +2 for CRC16	
 		request_payload = bytearray(32)		
@@ -1057,13 +1057,13 @@ class ac_db_debug(device):
 		# append CRC
 		
 		crc = self.checksum_func(payload)
-		print ("Checksum:"+format(crc,'02x'))
+		#print ("Checksum:"+format(crc,'02x'))
 		request_payload[len(payload)+1] = ((crc >> 8) & 0xFF)
 		request_payload[len(payload)+2] = crc & 0xFF
 		
 		
 		
-		print ("Packet:"+ ''.join(format(x, '02x') for x in request_payload))
+		#print ("Packet:"+ ''.join(format(x, '02x') for x in request_payload))
 		
 		response = self.send_packet(0x6a, request_payload)
 		self.logger.debug ("Resposnse:" + ''.join(format(x, '02x') for x in response))
