@@ -14,6 +14,8 @@ import traceback
 
 import platform
 
+from broadlink_ac_mqtt.MQTTLogDest import MQTTHandler
+
 logger = logging.getLogger(__name__)
 AC = None
 softwareversion = "1.0.18"
@@ -99,7 +101,7 @@ def stop_if_already_running():
 	if(check_if_running()):		
 		sys.exit()
 
-def init_logging(level,log_file_path):
+def init_logging(level,log_file_path,hostname,port,topic):
 		
 		# Init logging
 		logging.basicConfig(
@@ -117,6 +119,13 @@ def init_logging(level,log_file_path):
 		# tell the handler to use this format
 		console.setFormatter(formatter)
 		logging.getLogger('').addHandler(console)
+
+
+		#Log to MQTT server topic
+		myHandler = MQTTHandler(hostname, topic)
+		myHandler.setLevel(logging.DEBUG)
+		myHandler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s: %(message)s'))
+		logging.getLogger('').addHandler(myHandler)
 
 def touch_pid_file():
 		global pid_last_update
@@ -281,14 +290,6 @@ def start():
 	else:			
 		log_file_path = os.path.dirname(os.path.realpath(__file__))+'/log/out.log'
 		
-	log_level = logging.DEBUG if args.debug else logging.INFO
-	init_logging(log_level,log_file_path)
-	
-	logger.debug("%s v%s is starting up" % (__file__, softwareversion))
-	logLevel = {0: 'NOTSET', 10: 'DEBUG', 20: 'INFO', 30: 'WARNING', 40: 'ERROR'}
-	logger.debug('Loglevel set to ' + logLevel[logging.getLogger().getEffectiveLevel()])
-	
-	
 	##Apply the config, then if arguments, override the config values with args
 	config = read_config(config_file_path)
 
@@ -329,6 +330,14 @@ def start():
 	##Deamon Mode
 	if args.background:
 		config["daemon_mode"] = True			 
+
+	# Set up logging
+	log_level = logging.DEBUG if args.debug else logging.INFO
+	init_logging(log_level,log_file_path,config["mqtt_host"],config["mqtt_port"],config["mqtt_topic_prefix"]+"log")
+	
+	logger.debug("%s v%s is starting up" % (__file__, softwareversion))
+	logLevel = {0: 'NOTSET', 10: 'DEBUG', 20: 'INFO', 30: 'WARNING', 40: 'ERROR'}
+	logger.debug('Loglevel set to ' + logLevel[logging.getLogger().getEffectiveLevel()])
 		
 	##mmmm.. this looks dodgy.. but i'm not python expert 			
 	AC = AcToMqtt.AcToMqtt(config)
