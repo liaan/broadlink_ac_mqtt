@@ -2,6 +2,7 @@ service:
     daemon_mode: True
     update_interval: 10
     self_discovery: True
+    bind_to_ip: False
 
 mqtt:
     host: mqtt

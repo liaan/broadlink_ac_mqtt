@@ -23,16 +23,20 @@ def gendevice(devtype , host, mac,name=None, cloud=None,update_interval = 0):
 		return device(host=host, mac=mac,devtype =devtype,update_interval = update_interval)
 
 
-def discover(timeout=None, local_ip_address=None):
-	if local_ip_address is None:
+def discover(timeout=None, bind_to_ip=None):
+	if bind_to_ip is None:
 		s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 		s.connect(('8.8.8.8', 53))  # connecting to a UDP address doesn't send packets
-		local_ip_address = s.getsockname()[0]
-	address = local_ip_address.split('.')
+		bind_to_ip = s.getsockname()[0]
+
+		
+	address = bind_to_ip.split('.')
 	cs = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	cs.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 	cs.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-	cs.bind((local_ip_address,0))
+	
+	cs.bind((bind_to_ip,0))
+
 	port = cs.getsockname()[1]
 	starttime = time.time()
 
@@ -121,7 +125,7 @@ def discover(timeout=None, local_ip_address=None):
 
 
 class device:
-	def __init__(self, host, mac, timeout=10,name=None,cloud=None,devtype=None,update_interval=0):
+	def __init__(self, host, mac, timeout=10,name=None,cloud=None,devtype=None,update_interval=0,bind_to_ip=None):
 		self.host = host
 		self.mac = mac
 		self.name = name    
@@ -135,10 +139,11 @@ class device:
 		self.cs = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 		self.cs.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 		self.cs.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-		self.cs.bind(('',0))
+		#self.cs.bind(('',0))
 		self.type = "Unknown"
 		self.lock = threading.Lock()
 		self.update_interval = update_interval
+		self.bind_to_ip = bind_to_ip
 
 	def auth(self):
 		payload = bytearray(0x50)
@@ -315,7 +320,8 @@ class ac_db(device):
 		return status
 	
  
-	def __init__ (self, host, mac,name=None,cloud=None,debug = False,update_interval = 0,devtype=None):			
+	def __init__ (self, host, mac,name=None,cloud=None,debug = False,update_interval = 0,devtype=None,bind_to_ip=None):			
+		
 		device.__init__(self, host, mac,name=name,cloud=cloud,devtype=devtype,update_interval=update_interval)	
 		
 		devtype = devtype

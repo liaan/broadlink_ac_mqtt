@@ -42,9 +42,10 @@ class AcToMqtt:
 			#print status
 
 	
-	def discover(self):		 
+	def discover(self):		
+
 		##Go discovery
-		discovered_devices = broadlink.discover(timeout=5)			
+		discovered_devices = broadlink.discover(timeout=5,bind_to_ip=self.config['bind_to_ip'])			
 		devices = {}
 		
 		if discovered_devices == None:
