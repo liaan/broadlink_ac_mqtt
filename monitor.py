@@ -73,10 +73,10 @@ def read_config(config_file_path):
 	 
 	
 	##Mqtt settings
-	config["mqtt_host"] = config_file["mqtt"]["host"]
-	config["mqtt_port"] = config_file["mqtt"]["port"]
-	config["mqtt_user"]= config_file["mqtt"]["user"]
-	config["mqtt_password"] = config_file["mqtt"]["passwd"]
+	config["mqtt_host"] = config_file["mqtt"].get("host")
+	config["mqtt_port"] = config_file["mqtt"].get("port")
+	config["mqtt_user"]= config_file["mqtt"].get("user")
+	config["mqtt_password"] = config_file["mqtt"].get("passwd")
 	##set client id if set, otherwise just add timestamp to generic to prevent conflicts
 	config["mqtt_client_id"] = config_file["mqtt"]["client_id"] if config_file["mqtt"]["client_id"] else 'broadlink_to_mqtt-'+str(time.time())
 	config["mqtt_topic_prefix"] = config_file["mqtt"]["topic_prefix"]
@@ -231,7 +231,7 @@ def start():
 	#parser.add_argument("-dm", "--devicemac", help="Ac Mac Address, Default:  %s" % ac_mac)
 	##MQTT stuff
 	parser.add_argument("-ms", "--mqttserver", help='Mqtt Server, Default:')
-	parser.add_argument("-mp", "--mqttport", help="Mqtt Port" )
+	parser.add_argument("-mp", "--mqttport", help="Mqtt Port", type=int )
 	parser.add_argument("-mU", "--mqttuser", help="Mqtt User" )
 	parser.add_argument("-mP", "--mqttpassword", help="Mqtt Password" )
 	
