@@ -68,7 +68,7 @@ def read_config(config_file_path):
 	config["update_interval"] = config_file["service"]["update_interval"]	
 	config["self_discovery"] = config_file["service"]["self_discovery"]	
 	##What ip to bind to
-	config['bind_to_ip'] = config_file["service"]["bind_to_ip"] if "bind_to_ip" in config_file["service"] and  config_file["service"]["bind_to_ip"] <> False else None
+	config['bind_to_ip'] = config_file["service"].get("bind_to_ip") or None
 
 	 
 	
