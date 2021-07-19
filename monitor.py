@@ -269,7 +269,7 @@ def start():
 	
 	##LogFile
 	if args.logfile:			
-		log_file_path = args.config			 
+		log_file_path = args.logfile			 
 	else:			
 		log_file_path = os.path.dirname(os.path.realpath(__file__))+'/log/out.log'
 		
