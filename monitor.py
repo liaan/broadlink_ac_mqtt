@@ -67,6 +67,10 @@ def read_config(config_file_path):
 	config["daemon_mode"] = config_file["service"]["daemon_mode"]
 	config["update_interval"] = config_file["service"]["update_interval"]	
 	config["self_discovery"] = config_file["service"]["self_discovery"]	
+	##What ip to bind to
+	config['bind_to_ip'] = config_file["service"]["bind_to_ip"] if "bind_to_ip" in config_file["service"] and  config_file["service"]["bind_to_ip"] <> False else None
+
+	 
 	
 	##Mqtt settings
 	config["mqtt_host"] = config_file["mqtt"]["host"]
@@ -80,6 +84,7 @@ def read_config(config_file_path):
 	config["mqtt_auto_discovery_topic_retain"] = config_file["mqtt"]["auto_discovery_topic_retain"] if "auto_discovery_topic_retain" in config_file["mqtt"] else False
 	
 	
+
 	if config["mqtt_topic_prefix"] and config["mqtt_topic_prefix"].endswith("/") == False:
 		config["mqtt_topic_prefix"] = config["mqtt_topic_prefix"] + "/"
 		
