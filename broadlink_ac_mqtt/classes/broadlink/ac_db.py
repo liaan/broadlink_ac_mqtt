@@ -476,6 +476,31 @@ class ac_db(device):
 		else:
 			self.logger.debug("Not found Turbo value %s" , str(value))
 			return False
+	def set_fixation_v(self,fixation_text):
+		##Make sure latest info as cannot just update one things, have set all
+		self.get_ac_states()
+		
+		fixation = self.STATIC.FIXATION.VERTICAL.__dict__.get(fixation_text.upper())
+		if fixation != None:
+			self.status['fixation_v'] = fixation
+			self.set_ac_status()
+			return self.make_nice_status(self.status)
+		else:
+			self.logger.debug("Not found mode value %s" , str(fixation_text))
+			return False
+
+	def set_fixation_h(self,fixation_text):
+		##Make sure latest info as cannot just update one things, have set all
+		self.get_ac_states()
+		
+		fixation = self.STATIC.FIXATION.HORIZONTAL.__dict__.get(fixation_text.upper())
+		if fixation != None:
+			self.status['fixation_h'] = fixation
+			self.set_ac_status()
+			return self.make_nice_status(self.status)
+		else:
+			self.logger.debug("Not found mode value %s" , str(fixation_text))
+			return False
 
 	def set_homekit_mode(self,status):
 		if type(status) is not str:

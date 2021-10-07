@@ -445,6 +445,31 @@ class AcToMqtt:
 				logger.debug("Unable to refresh")
 				return
 			return
+		elif function ==  "fixation_v":	
+			try:
+				if self.device_objects.get(address):
+					status = self.device_objects[address].set_fixation_v(value)
+					
+					if status :
+						self.publish_mqtt_info(status)
+				else:
+					logger.debug("Device not on list of devices %s, type:%s" % (address,type(address)))
+					return
+			except Exception as e:	
+				logger.critical(e)
+				return
+		elif function ==  "fixation_h":	
+			try:
+				if self.device_objects.get(address):					
+					status = self.device_objects[address].set_fixation_h(value)					
+					if status :
+						self.publish_mqtt_info(status)
+				else:
+					logger.debug("Device not on list of devices %s, type:%s" % (address,type(address)))
+					return
+			except Exception as e:	
+				logger.critical(e)
+				return
 		else:
 			logger.debug("No function match")
 			return
