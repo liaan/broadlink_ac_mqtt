@@ -173,14 +173,17 @@ class AcToMqtt:
 				,"mode_command_topic" : self.config["mqtt_topic_prefix"]+  device.status["macaddress"]+"/mode_homeassistant/set"
 				,"temperature_command_topic" : self.config["mqtt_topic_prefix"]  + device.status["macaddress"]+"/temp/set"
 				,"fan_mode_command_topic" : self.config["mqtt_topic_prefix"] + device.status["macaddress"]+"/fanspeed_homeassistant/set"
+				,"swing_mode_command_topic": self.config["mqtt_topic_prefix"] + device.status["macaddress"] + "/fixation_v/set"
 				,"action_topic" : self.config["mqtt_topic_prefix"] +  device.status["macaddress"]+"/homeassistant/set"
 				##Read values
 				,"current_temperature_topic" : self.config["mqtt_topic_prefix"]  + device.status["macaddress"]+"/ambient_temp/value"				
 				,"mode_state_topic" : self.config["mqtt_topic_prefix"]  + device.status["macaddress"]+"/mode_homeassistant/value"	
 				,"temperature_state_topic" : self.config["mqtt_topic_prefix"]  + device.status["macaddress"]+"/temp/value"	
-				,"fan_mode_state_topic" : self.config["mqtt_topic_prefix"]  + device.status["macaddress"]+"/fanspeed_homeassistant/value"	
+				,"fan_mode_state_topic" : self.config["mqtt_topic_prefix"]  + device.status["macaddress"]+"/fanspeed_homeassistant/value"
+				,"swing_mode_state_topic" : self.config["mqtt_topic_prefix"]  + device.status["macaddress"]+"/fixation_v/value"
 				,"fan_modes": ["Auto","Low","Medium", "High","Turbo","Mute"]
-				,"modes": ['off',"cool","heat","fan_only","dry"]
+				,"modes": ["off","cool","heat","fan_only","dry"]
+				,"swing_modes": ["TOP", "MIDDLE1", "MIDDLE2", "MIDDLE3", "BOTTOM", "SWING",  "AUTO", ]
 				,"max_temp":32.0
 				,"min_temp":16.0
 				,"precision": 0.5
