@@ -183,7 +183,7 @@ class AcToMqtt:
 				,"swing_mode_state_topic" : self.config["mqtt_topic_prefix"]  + device.status["macaddress"]+"/fixation_v/value"
 				,"fan_modes": ["Auto","Low","Medium", "High","Turbo","Mute"]
 				,"modes": ["off","cool","heat","fan_only","dry"]
-				,"swing_modes": ["TOP", "MIDDLE1", "MIDDLE2", "MIDDLE3", "BOTTOM", "SWING",  "AUTO", ]
+				,"swing_modes": ["TOP", "MIDDLE1", "MIDDLE2", "MIDDLE3", "BOTTOM", "SWING",  "AUTO"]
 				,"max_temp":32.0
 				,"min_temp":16.0
 				,"precision": 0.5
