@@ -473,6 +473,66 @@ class AcToMqtt:
 			except Exception as e:	
 				logger.critical(e)
 				return
+		elif function ==  "display":	
+			try:
+				if self.device_objects.get(address):					
+					status = self.device_objects[address].set_display(value)					
+					if status :
+						self.publish_mqtt_info(status)
+				else:
+					logger.debug("Device not on list of devices %s, type:%s" % (address,type(address)))
+					return
+			except Exception as e:	
+				logger.critical(e)
+				return
+		elif function ==  "mildew":	
+			try:
+				if self.device_objects.get(address):					
+					status = self.device_objects[address].set_mildew(value)					
+					if status :
+						self.publish_mqtt_info(status)
+				else:
+					logger.debug("Device not on list of devices %s, type:%s" % (address,type(address)))
+					return
+			except Exception as e:	
+				logger.critical(e)
+				return
+		elif function ==  "clean":	
+			try:
+				if self.device_objects.get(address):					
+					status = self.device_objects[address].set_clean(value)					
+					if status :
+						self.publish_mqtt_info(status)
+				else:
+					logger.debug("Device not on list of devices %s, type:%s" % (address,type(address)))
+					return
+			except Exception as e:	
+				logger.critical(e)
+				return
+		elif function ==  "health":	
+			try:
+				if self.device_objects.get(address):					
+					status = self.device_objects[address].set_health(value)					
+					if status :
+						self.publish_mqtt_info(status)
+				else:
+					logger.debug("Device not on list of devices %s, type:%s" % (address,type(address)))
+					return
+			except Exception as e:	
+				logger.critical(e)
+				return
+		elif function ==  "sleep":	
+			try:
+				if self.device_objects.get(address):					
+					status = self.device_objects[address].set_sleep(value)					
+					if status :
+						self.publish_mqtt_info(status)
+				else:
+					logger.debug("Device not on list of devices %s, type:%s" % (address,type(address)))
+					return
+			except Exception as e:	
+				logger.critical(e)
+				return
 		else:
 			logger.debug("No function match")
 			return

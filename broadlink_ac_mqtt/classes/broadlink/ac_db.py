@@ -501,7 +501,71 @@ class ac_db(device):
 		else:
 			self.logger.debug("Not found mode value %s" , str(fixation_text))
 			return False
+        def set_display(self,value):
+		##Make sure latest info as cannot just update one things, have set all
+		self.get_ac_states()
+		
+		mode = self.STATIC.ONOFF.__dict__.get(value)
+		if mode != None:
+			self.status['display'] = mode
+			self.set_ac_status()
+			return self.make_nice_status(self.status)
+		else:
+			self.logger.debug("Not found display value %s" , str(value))
+			return False
 
+	def set_mildew(self,value):
+		##Make sure latest info as cannot just update one things, have set all
+		self.get_ac_states()
+		
+		mode = self.STATIC.ONOFF.__dict__.get(value)
+		if mode != None:
+			self.status['mildew'] = mode
+			self.set_ac_status()
+			return self.make_nice_status(self.status)
+		else:
+			self.logger.debug("Not found display value %s" , str(value))
+			return False
+
+	def set_clean(self,value):
+		##Make sure latest info as cannot just update one things, have set all
+		self.get_ac_states()
+		
+		mode = self.STATIC.ONOFF.__dict__.get(value)
+		if mode != None:
+			self.status['clean'] = mode
+			self.set_ac_status()
+			return self.make_nice_status(self.status)
+		else:
+			self.logger.debug("Not found display value %s" , str(value))
+			return False
+
+	def set_health(self,value):
+		##Make sure latest info as cannot just update one things, have set all
+		self.get_ac_states()
+		
+		mode = self.STATIC.ONOFF.__dict__.get(value)
+		if mode != None:
+			self.status['health'] = mode
+			self.set_ac_status()
+			return self.make_nice_status(self.status)
+		else:
+			self.logger.debug("Not found display value %s" , str(value))
+			return False
+
+	def set_sleep(self,value):
+		##Make sure latest info as cannot just update one things, have set all
+		self.get_ac_states()
+		
+		mode = self.STATIC.ONOFF.__dict__.get(value)
+		if mode != None:
+			self.status['sleep'] = mode
+			self.set_ac_status()
+			return self.make_nice_status(self.status)
+		else:
+			self.logger.debug("Not found display value %s" , str(value))
+			return False
+		
 	def set_homekit_mode(self,status):
 		if type(status) is not str:
 			self.logger.debug('Status variable is not string %s',type(status))
@@ -708,7 +772,7 @@ class ac_db(device):
 		status_nice['display'] = self.get_key(self.STATIC.ONOFF.__dict__,status['display'])
 		status_nice['mildew'] = self.get_key(self.STATIC.ONOFF.__dict__,status['mildew'])
 		status_nice['health'] = self.get_key(self.STATIC.ONOFF.__dict__,status['health'])
-		status_nice['fixation_h'] = self.get_key(self.STATIC.FIXATION.VERTICAL.__dict__,status['fixation_h'])
+		status_nice['fixation_h'] = self.get_key(self.STATIC.FIXATION.HORIZONTAL.__dict__,status['fixation_h'])
 		
 		
 		status_nice['ifeel'] = self.get_key(self.STATIC.ONOFF.__dict__,status['ifeel'])
@@ -972,7 +1036,7 @@ class ac_db_debug(device):
 			self.status['display'] =response_payload[20] >> 4 & 0b00000001
 			self.status['mildew'] = response_payload[20] >> 3 & 0b00000001
 			self.status['health'] = response_payload[18] >> 1 & 0b00000001
-			self.status['fixation_h'] = response_payload[10]  & 0b00000111
+			self.status['fixation_h'] = response_payload[11] >> 5 & 0b00000111
 			self.status['fanspeed']  = response_payload[13] >> 5 & 0b00000111
 			self.status['ifeel'] = response_payload[15] >> 3& 0b00000001
 			self.status['mute'] = response_payload[14] >> 7& 0b00000001
