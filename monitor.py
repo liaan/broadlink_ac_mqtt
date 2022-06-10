@@ -14,7 +14,7 @@ import traceback
 
 logger = logging.getLogger(__name__)
 AC = None
-softwareversion = "1.1.0"
+softwareversion = "1.1.1"
 
 
 pid = str(os.getpid())
