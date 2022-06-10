@@ -501,10 +501,11 @@ class ac_db(device):
 		else:
 			self.logger.debug("Not found mode value %s" , str(fixation_text))
 			return False
-        def set_display(self,value):
+			
+	def set_display(self,value):
 		##Make sure latest info as cannot just update one things, have set all
 		self.get_ac_states()
-		
+
 		mode = self.STATIC.ONOFF.__dict__.get(value)
 		if mode != None:
 			self.status['display'] = mode
