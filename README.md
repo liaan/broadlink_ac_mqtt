@@ -1,7 +1,10 @@
 # Broadlink Air Conditioners to mqtt  
+----------------------------------------------------------- Donations -------------------------------------------------------------------------------------
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](http://www.paypal.me/liaanvdm)
 
-Docker version:  https://github.com/broadlink-ac/broadlink_ac_mqtt_docker
+#### BTC Donations: 1DaGtHqaYvvDrXcpiNoNkNJgkmm6dEp7Lq
+------------------------------------------------------------------------------------------------------------------------------------------------
+####Docker version:  https://github.com/broadlink-ac/broadlink_ac_mqtt_docker
 
 #### Air Conditioners compatibility 
   * Dunham bush --> Tested and working
