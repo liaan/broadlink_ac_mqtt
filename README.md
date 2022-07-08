@@ -1,5 +1,6 @@
 # Broadlink Air Conditioners to mqtt  
------------------------------------------------------------ Donations -------------------------------------------------------------------------------------
+----------------------------------------------------------- Donations --------------------------------------------------------------
+
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](http://www.paypal.me/liaanvdm)
 
 #### BTC Donations: 1DaGtHqaYvvDrXcpiNoNkNJgkmm6dEp7Lq
