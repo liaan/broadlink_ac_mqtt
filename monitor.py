@@ -18,7 +18,7 @@ softwareversion = "1.1.1"
 
 
 pid = str(os.getpid())
-pidfile = tempfile.gettempdir() + "/ac_to_mqtt.pid"
+pidfile = "ac_to_mqtt.pid"
 pid_stale_time = 5
 pid_last_update = 0
 
@@ -185,20 +185,20 @@ def restart(signalNumber = 0, frame = 0):
 	""
 
 def init_signal():
-	signal.signal(signal.SIGHUP, restart)
+	signal.signal(signal.SIGBREAK, restart)
 	signal.signal(signal.SIGINT, receiveSignal)
-	signal.signal(signal.SIGQUIT, receiveSignal)
+	#signal.signal(signal., receiveSignal)
 	signal.signal(signal.SIGILL, receiveSignal)
-	signal.signal(signal.SIGTRAP, receiveSignal)
+	#signal.signal(signal.SIGTRAP, receiveSignal)
 	signal.signal(signal.SIGABRT, receiveSignal)
-	signal.signal(signal.SIGBUS, receiveSignal)
+	#signal.signal(signal.SIGBUS, receiveSignal)
 	signal.signal(signal.SIGFPE, receiveSignal)
 	#signal.signal(signal.SIGKILL, receiveSignal)
-	signal.signal(signal.SIGUSR1, receiveSignal)
+	#signal.signal(signal.SIGUSR1, receiveSignal)
 	signal.signal(signal.SIGSEGV, receiveSignal)
-	signal.signal(signal.SIGUSR2, receiveSignal)
-	signal.signal(signal.SIGPIPE, receiveSignal)
-	signal.signal(signal.SIGALRM, receiveSignal)
+#	signal.signal(signal.SIGUSR2, receiveSignal)
+	#signal.signal(signal.SIGPIPE, receiveSignal)
+	#signal.signal(signal.SIGALRM, receiveSignal)
 	signal.signal(signal.SIGTERM, stop)
 
 
@@ -268,8 +268,11 @@ def start():
 	else:
 		if os.path.exists(data_dir+'/settings/config.yml'):
 			config_file_path = data_dir+'/settings/config.yml'
+		# elif  os.path.exists(data_dir+'\\settings\\config.yml'):
+		# 	config_file_path = data_dir+'\\settings\\config.yml'
 		else:
-			config_file_path = data_dir+'/config.yml'
+			# config_file_path = data_dir+'/config.yml'
+			config_file_path = data_dir+'\\settings\config.yml'
 		
 	
 	##LogFile
@@ -369,7 +372,9 @@ def start():
 		##Run main loop
 		while do_loop :
 			running = True
+			
 			AC.start(config,devices)
+			 
 			touch_pid_file()
 		
 		running = False
