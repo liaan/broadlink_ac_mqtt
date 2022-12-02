@@ -13,7 +13,7 @@ import threading
 
 import struct
 
-version = "1.1.3"
+version = "2.0"
 
 def gendevice(devtype , host, mac,name=None, cloud=None,update_interval = 0):
 	#print format(devtype,'02x')
