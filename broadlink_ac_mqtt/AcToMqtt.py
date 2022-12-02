@@ -101,6 +101,8 @@ class AcToMqtt:
 		try:
 			
 			for key in devices:
+				
+
 				device = devices[key]
 				##Just check status on every update interval
 				if key in self.last_update:
@@ -116,6 +118,7 @@ class AcToMqtt:
 				##Get the status, the global update interval is used as well to reduce requests to aircons as they slow
 				
 				status = device.get_ac_status()						
+				
 				#print status
 				if status:
 					##Update last time checked

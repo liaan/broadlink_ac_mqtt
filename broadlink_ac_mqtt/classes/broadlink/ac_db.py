@@ -2,12 +2,15 @@
 # -*- coding: utf8 -*-
 
 from datetime import datetime
-from Crypto.Cipher import AES
+
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+
 import time
 import random
 import socket
 import threading
-import parser
+
 import struct
 
 version = "1.1.3"
@@ -125,7 +128,12 @@ def discover(timeout=None, bind_to_ip=None):
 
 
 class device:
+	__INIT_KEY = "097628343fe99e23765c1513accf8b02"
+	__INIT_VECT = "562e17996d093d28ddb3ba695a2e6f58"
+		
 	def __init__(self, host, mac, timeout=10,name=None,cloud=None,devtype=None,update_interval=0,bind_to_ip=None):
+
+		
 		self.host = host
 		self.mac = mac
 		self.name = name    
@@ -133,8 +141,11 @@ class device:
 		self.timeout = timeout
 		self.devtype = devtype
 		self.count = random.randrange(0xffff)
+		##AES
 		self.key = bytearray([0x09, 0x76, 0x28, 0x34, 0x3f, 0xe9, 0x9e, 0x23, 0x76, 0x5c, 0x15, 0x13, 0xac, 0xcf, 0x8b, 0x02])
-		self.iv = bytearray([0x56, 0x2e, 0x17, 0x99, 0x6d, 0x09, 0x3d, 0x28, 0xdd, 0xb3, 0xba, 0x69, 0x5a, 0x2e, 0x6f, 0x58])
+		self.iv = bytearray([0x56, 0x2e, 0x17, 0x99, 0x6d, 0x09, 0x3d, 0x28, 0xdd, 0xb3, 0xba, 0x69, 0x5a, 0x2e, 0x6f, 0x58])		
+		
+
 		self.id = bytearray([0, 0, 0, 0])
 		self.cs = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 		self.cs.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -144,6 +155,27 @@ class device:
 		self.lock = threading.Lock()
 		self.update_interval = update_interval
 		self.bind_to_ip = bind_to_ip
+		self.aes = None
+		self.update_aes(bytes.fromhex(self.__INIT_KEY))
+
+		
+
+	def update_aes(self, key: bytes) -> None:
+		"""Update AES."""
+		self.aes = Cipher(
+			algorithms.AES(bytes(key)), modes.CBC(self.iv), backend=default_backend()
+		)
+
+	def encrypt(self, payload: bytes) -> bytes:
+		"""Encrypt the payload."""
+		encryptor = self.aes.encryptor()
+		return encryptor.update(bytes(payload)) + encryptor.finalize()
+
+	def decrypt(self, payload: bytes) -> bytes:
+		"""Decrypt the payload."""
+		decryptor = self.aes.decryptor()
+		return decryptor.update(bytes(payload)) + decryptor.finalize()
+
 
 	def auth(self):
 		payload = bytearray(0x50)
@@ -177,8 +209,8 @@ class device:
 
 		enc_payload = response[0x38:]
 
-		aes = AES.new(bytes(self.key), AES.MODE_CBC, bytes(self.iv))
-		payload = aes.decrypt(bytes(enc_payload))
+		
+		payload = self.decrypt(bytes(enc_payload))
 		
 		if not payload:
 			return False
@@ -189,6 +221,9 @@ class device:
 
 		self.id = payload[0x00:0x04]
 		self.key = key
+
+		self.update_aes(payload[0x04:0x14])
+
 		return True
 
 	def get_type(self):
@@ -226,8 +261,9 @@ class device:
 			checksum += payload[i]
 			checksum = checksum & 0xffff
 
-		aes = AES.new(bytes(self.key), AES.MODE_CBC, bytes(self.iv))
-		payload = aes.encrypt(bytes(payload))
+		 
+		
+		payload = self.encrypt(bytes(payload))
 
 		packet[0x34] = checksum & 0xff
 		packet[0x35] = checksum >> 8
@@ -337,6 +373,7 @@ class ac_db(device):
 		self.status['macaddress'] = ''.join(format(x, '02x') for x in mac) 
 		self.status['hostip'] = host
 		self.status['name'] = name
+		self.status['lastupdate'] = 0
 		
 		
 		self.logging.basicConfig(level=(self.logging.DEBUG if debug else self.logging.INFO))
@@ -656,12 +693,12 @@ class ac_db(device):
 		
 		err = response[0x22] | (response[0x23] << 8)
 		if err == 0:
-			aes = AES.new(bytes(self.key), AES.MODE_CBC, bytes(self.iv))
+			
 
 			# response = bytearray.fromhex("5aa5aa555aa5aa55000000000000000000000000000000000000000000000000c6d000002a4e6a0055b9af41a70d43b401000000b9c00000aeaac104468cf91b485f38c67f7bf57f");
 			#response = bytearray.fromhex("5aa5aa555aa5aa5547006f008d9904312c003e00000000003133a84d00400000d8d500002a4e6a0070a1b88c08b043a001000000b9c0000038821c66e3b38a5afe79dcb145e215d7")
 		
-			response_payload = aes.decrypt(bytes(response[0x38:]))
+			response_payload = self.decrypt(bytes(response[0x38:]))
 			response_payload = bytearray(response_payload)
 		  
 		   
@@ -712,8 +749,8 @@ class ac_db(device):
 		err = response[0x22] | (response[0x23] << 8)
 		
 		if err == 0:
-			aes = AES.new(bytes(self.key), AES.MODE_CBC, bytes(self.iv))
-			response_payload = bytes(aes.decrypt(bytes(response[0x38:])))			
+			
+			response_payload = bytes(self.decrypt(bytes(response[0x38:])))			
 			
 			response_payload = bytearray(response_payload)
 			packet_type = response_payload[4]			
@@ -927,9 +964,12 @@ class ac_db(device):
 
 		err = response[0x22] | (response[0x23] << 8)
 		if err == 0:
-			aes = AES.new(bytes(self.key), AES.MODE_CBC, bytes(self.iv))		
-			response_payload = aes.decrypt(bytes(response[0x38:]))
+			
+			
+			response_payload = self.decrypt(bytes(response[0x38:]))
 			response_payload = bytearray(response_payload)
+
+
 			packet_type = response_payload[4]						
 			if packet_type == 0x07:  ##Should be result packet, otherwise something weird
 				return self.status
@@ -1007,8 +1047,8 @@ class ac_db_debug(device):
 		err = response[0x22] | (response[0x23] << 8)
 		
 		if err == 0:
-			aes = AES.new(bytes(self.key), AES.MODE_CBC, bytes(self.iv))
-			response_payload = bytes(aes.decrypt(bytes(response[0x38:])))			
+			
+			response_payload = bytes(self.decrypt(bytes(response[0x38:])))			
 			
 			response_payload = bytearray(response_payload)
 			packet_type = response_payload[4]			
@@ -1166,8 +1206,8 @@ class ac_db_debug(device):
 
 		err = response[0x22] | (response[0x23] << 8)
 		if err == 0:
-			aes = AES.new(bytes(self.key), AES.MODE_CBC, bytes(self.iv))		
-			response_payload = aes.decrypt(bytes(response[0x38:]))
+			
+			response_payload = self.decrypt(bytes(response[0x38:]))
 			response_payload = bytearray(response_payload)
 			packet_type = response_payload[4]						
 			if packet_type == 0x07:  ##Should be result packet, otherwise something weird
@@ -1227,8 +1267,8 @@ class ac_db_debug(device):
 			checksum += payload[i]
 			checksum = checksum & 0xffff
 
-		aes = AES.new(bytes(self.key), AES.MODE_CBC, bytes(self.iv))
-		payload = aes.encrypt(bytes(payload))
+		
+		payload = self.encrypt(bytes(payload))
 
 		packet[0x34] = checksum & 0xff
 		packet[0x35] = checksum >> 8
@@ -1293,8 +1333,8 @@ class ac_db_debug(device):
 
 		enc_payload = response[0x38:]
 
-		aes = AES.new(bytes(self.key), AES.MODE_CBC, bytes(self.iv))
-		payload = aes.decrypt(bytes(enc_payload))
+		
+		payload = self.decrypt(bytes(enc_payload))
 		
 		if not payload:
 			return False
