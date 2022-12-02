@@ -5,5 +5,7 @@
 config.yml
 desktop.ini
 
+
 .vscode/*
 env/*
+.devcontainer/*
