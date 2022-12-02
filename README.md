@@ -24,15 +24,11 @@ https://t.me/+1Xw9Kwr2P7k2YjY0
   * Ballu BSUI/IN-12HN8 (with intergated Wi-Fi module and AC Freedom app). --> Tested and working
   * In theory any Broadlink devtype == 0x4E2a (20010) using the AC Freedom APP
 
-#### Installation: 
-
-uses Pahoo MQTT so run :
-
+## Installation: 
 ```
-pip install paho-mqtt
-pip install pyyaml
-pip install PyCrypto
+pip install -r requirements.txt 
 ```
+
 1. copy sample_config.yml to config.yml under /settings folder or the data-dir you speified
 2. Edit config to match your enviroment
 3. run ./monitor.py (or python monitor.py)
