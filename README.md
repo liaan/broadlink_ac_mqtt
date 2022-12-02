@@ -25,10 +25,10 @@ https://t.me/+1Xw9Kwr2P7k2YjY0
   * In theory any Broadlink devtype == 0x4E2a (20010) using the AC Freedom APP
 
 ## Installation: 
-
-pip install -r requirements.txt 
-
 ```
+pip install -r requirements.txt 
+```
+
 1. copy sample_config.yml to config.yml under /settings folder or the data-dir you speified
 2. Edit config to match your enviroment
 3. run ./monitor.py (or python monitor.py)
