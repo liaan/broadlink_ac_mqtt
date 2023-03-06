@@ -1,3 +1,13 @@
+# ALERT:!!!   Archived
+
+There are simply to many new aircons that don't work with this code anymore, and enough other forks to keep older AC's going
+
+also, my AC's are working fine.. so no motiviation to keep this up to date
+
+------------------------------------------------------------------------------
+
+
+
 # Broadlink Air Conditioners to mqtt  
 ##  Telegram Group 
 https://t.me/+1Xw9Kwr2P7k2YjY0 
