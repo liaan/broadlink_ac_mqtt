@@ -31,6 +31,7 @@ def discover(timeout=None, bind_to_ip=None):
 		s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 		s.connect(('8.8.8.8', 53))  # connecting to a UDP address doesn't send packets
 		bind_to_ip = s.getsockname()[0]
+		s.close()
 
 		
 	address = bind_to_ip.split('.')
